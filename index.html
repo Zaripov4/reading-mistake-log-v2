@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reading Mistake Log</title>
+<meta name="description" content="Find out why you lose marks in IELTS Reading, and fix it.">
+<meta name="theme-color" content="#0B5E5C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Reading Log">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{
+  --bg:#F3F6FA; --card:#FFFFFF; --fg:#16212E; --mute:#5B6878; --line:#DDE4EC;
+  --navy:#1F3A5F; --accent:#0E7C7B; --accent-soft:#DDF1F0; --ok:#1B7F3B; --ok-soft:#E4F4E9;
+  --btn:#FFFFFF; --btn-press:#DDF1F0; --primary:#1F3A5F; --danger:#B3261E;
+  --bad:#B3261E; --bad-soft:#FDE2E0; --ng:#6B4FBB; --ng-soft:#EEE8FB; --hl:#FFE066;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0F151D; --card:#18212C; --fg:#E8EEF5; --mute:#9DAABA; --line:#2A3542;
+  --navy:#9DBBE0; --accent:#3CC2BE; --accent-soft:#12302F; --ok:#5CC57E; --ok-soft:#163222;
+  --btn:#1E2935; --btn-press:#12302F; --primary:#2F5585; --danger:#FF8A80;
+  --bad:#FF8A80; --bad-soft:#3A1A18; --ng:#B39DFF; --ng-soft:#251D3D; --hl:#7A6200; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:17px/1.45 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+header h1{font-size:22px;margin:0;color:var(--navy);line-height:1.2}
+.help{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:8px 14px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+h2{font-size:20px;margin:0 0 4px;color:var(--navy)}
+.sub{color:var(--mute);margin:0 0 14px;font-size:15px}
+.welcome{background:#0B5E5C;color:#fff;border:0}
+.welcome h2{color:#fff}
+.welcome ol{margin:8px 0 12px;padding-left:0;list-style:none}
+.welcome li{margin:8px 0;font-size:17px}
+.welcome button{background:#F2A65A;color:#16212E;color:#fff;border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:700;width:100%;cursor:pointer}
+
+/* XP / streak bar */
+.stats{display:flex;gap:8px;align-items:center;margin:0 0 14px;flex-wrap:wrap}
+.pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:700;white-space:nowrap}
+.xpwrap{flex:1;min-width:120px;display:flex;align-items:center;gap:8px}
+.xpbar{flex:1;height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#F5B700);border-radius:5px;transition:width .5s}
+.xpn{font-size:13px;color:var(--mute);font-weight:700;white-space:nowrap}
+
+.big{display:block;width:100%;background:var(--accent);color:#fff;border:0;border-radius:14px;padding:16px;font:inherit;font-size:19px;font-weight:700;cursor:pointer}
+.big:active{transform:scale(.98)}
+.link{background:none;border:0;color:var(--navy);font:inherit;font-size:15px;font-weight:700;text-decoration:underline;cursor:pointer;padding:10px 0 0;display:block;margin:0 auto}
+
+/* quick mode buttons */
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.reason{position:relative;text-align:left;background:var(--btn);color:var(--fg);border:2px solid var(--line);border-radius:14px;padding:14px 12px 12px;min-height:80px;font:inherit;cursor:pointer;transition:transform .08s, background .15s, border-color .15s}
+.reason:active{transform:scale(.97)}
+.reason.flash{background:var(--btn-press);border-color:var(--accent)}
+.reason b{display:block;font-size:16px;line-height:1.2;padding-right:30px}
+.reason span{display:block;font-size:13px;color:var(--mute);margin-top:4px;line-height:1.3}
+.reason i{position:absolute;top:10px;right:10px;font-style:normal;font-weight:700;font-size:14px;min-width:26px;height:26px;border-radius:13px;background:var(--accent-soft);color:var(--fg);display:grid;place-items:center;padding:0 7px}
+.count{margin-top:12px;color:var(--mute);font-size:15px;text-align:center}
+
+/* top 3 */
+.top{display:grid;gap:10px}
+.tm{border-radius:14px;padding:14px;background:var(--bg);border:1px solid var(--line)}
+.tm.first{background:var(--accent-soft);border:2px solid var(--accent)}
+.tm .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.tm .rank{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+.tm .name{font-weight:700;font-size:19px}
+.tm .times{color:var(--mute);font-size:14px;white-space:nowrap}
+.tm .short{margin:4px 0 0;font-size:16px}
+.train{margin-top:10px;background:var(--primary);color:#fff;border:0;border-radius:12px;padding:12px 14px;font:inherit;font-weight:700;width:100%;cursor:pointer;font-size:16px}
+.train.sm{width:auto;padding:8px 14px;font-size:15px}
+.wgroup{margin-bottom:14px}
+.wgroup h3{font-size:15px;margin:0 0 6px;color:var(--mute);font-weight:700}
+.wrow{display:grid;grid-template-columns:minmax(0,9.5em) minmax(0,1fr) 2.2em;gap:8px;align-items:center;font-size:15px;padding:3px 0}
+.wrow .bar{height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.wrow .bar i{display:block;height:100%;background:var(--navy);opacity:.6;border-radius:6px}
+.wrow.worst{font-weight:700}
+.wrow.worst .bar i{background:var(--accent);opacity:1}
+.wrow b{text-align:right}
+.wtip{font-size:14px;background:var(--accent-soft);border-radius:10px;padding:10px 12px;margin-top:4px}
+.empty{color:var(--mute);text-align:center;padding:10px 0;font-size:15px}
+
+/* fix: picture + short steps */
+.vis{background:var(--bg);border:2px dashed var(--line);border-radius:14px;padding:12px;margin:10px 0;font-size:15px;text-align:center}
+.tm .vis,.result .vis{background:var(--card)}
+.vrow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:4px 0}
+.w{font-size:20px;font-weight:700;letter-spacing:.01em}
+mark{background:var(--hl);color:inherit;border-radius:4px;padding:0 3px}
+.w mark{padding:0;border-radius:2px}
+.ch{display:inline-block;border-radius:999px;padding:3px 11px;font-weight:700;font-size:14px;border:1px solid var(--line);background:var(--card)}
+.ch.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.ch.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.ar{font-size:22px;color:var(--accent);font-weight:700;line-height:1}
+.bub{display:inline-block;background:var(--card);border:2px solid var(--line);border-radius:16px 16px 16px 4px;padding:8px 12px;text-align:left;max-width:100%}
+.cap{font-size:13px;color:var(--mute);margin-top:6px}
+.circ{border:2px solid var(--bad);border-radius:999px;padding:0 6px;font-weight:700}
+.snip{background:var(--card);border-left:4px solid var(--accent);padding:8px 12px;border-radius:6px;text-align:left;font-size:15px;margin:6px 0}
+.steps{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.steps li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:15px;font-weight:700;text-align:left}
+.more{margin-top:8px;font-size:14px;color:var(--mute)}
+.more summary{cursor:pointer;font-weight:700;color:var(--navy)}
+.more p{margin:6px 0 0}
+/* flow chart */
+.node{display:inline-block;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:6px 12px;font-weight:700}
+.dn{color:var(--accent);font-size:22px;font-weight:700;line-height:1.3}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.leaf{border-radius:10px;padding:8px 4px;font-size:13px;font-weight:700;border:2px solid}
+.leaf b{display:block;font-size:15px;margin-top:2px}
+.leaf.ok{background:var(--ok-soft);border-color:var(--ok)}
+.leaf.bad{background:var(--bad-soft);border-color:var(--bad)}
+.leaf.ng{background:var(--ng-soft);border-color:var(--ng)}
+/* map */
+.map{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:5px;max-width:280px;margin:0 auto}
+.map span{border:2px solid var(--navy);border-radius:8px;padding:10px 4px;font-weight:700;font-size:17px;background:var(--card)}
+.map .path{border:2px dashed var(--mute);background:transparent;font-size:12px;color:var(--mute);font-weight:400}
+.map .door{border-color:var(--accent);background:var(--accent-soft);font-size:12px}
+.tbar{display:flex;gap:3px;border-radius:10px;overflow:hidden;font-size:13px;font-weight:700}
+.tbar span{padding:8px 2px;color:#fff;background:var(--navy)}
+.tbar span:last-child{background:var(--accent)}
+
+/* games */
+.games{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.game{position:relative;font:inherit;background:var(--btn);color:var(--fg);border:2px solid var(--line);border-radius:14px;padding:12px 6px 10px;cursor:pointer;text-align:center}
+.game:active{transform:scale(.96)}
+.game .ge{display:block;font-size:28px;line-height:1.1}
+.game b{display:block;font-size:13px;line-height:1.2;margin-top:4px}
+.game .stars{display:block;font-size:12px;color:#E0A800;margin-top:3px;letter-spacing:1px}
+.game.boss{border-color:var(--accent);background:var(--accent-soft)}
+.game .tag2{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
+
+/* history */
+.hist{list-style:none;margin:0;padding:0}
+.hist li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
+.hist .q{flex:none;font-weight:700;min-width:38px;color:var(--navy)}
+.hist .what{flex:1;min-width:0;overflow-wrap:anywhere}
+.hist .what s{color:var(--mute)}
+.hist .tag{display:inline-block;margin-top:3px;font-size:13px;font-weight:700;background:var(--accent-soft);border-radius:999px;padding:1px 9px}
+.x{border:0;background:none;color:var(--mute);font-size:22px;line-height:1;cursor:pointer;padding:0 6px}
+
+/* scores */
+.scoreform{display:flex;gap:10px}
+.scoreform input{flex:1;min-width:0;font:inherit;font-size:22px;font-weight:700;text-align:center;padding:10px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--fg)}
+.scoreform input:focus{outline:none;border-color:var(--accent)}
+.primary{background:var(--primary);color:#fff;border:0;border-radius:12px;padding:0 20px;font:inherit;font-weight:700;cursor:pointer}
+.bandnow{margin-top:12px;text-align:center;font-size:16px;min-height:24px}
+.bandnow b{font-size:26px;color:var(--ok)}
+.chart{margin-top:14px;overflow-x:auto}
+.scores{list-style:none;margin:10px 0 0;padding:0}
+.scores li{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.seg button{font:inherit;font-size:15px;font-weight:700;padding:10px;border:0;background:var(--bg);color:var(--mute);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chips button{font:inherit;font-size:16px;font-weight:700;padding:12px 8px;border-radius:12px;border:2px solid var(--line);background:var(--btn);color:var(--fg);cursor:pointer}
+.chips button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.note{font-size:12px;color:var(--mute);margin-top:8px}
+
+.tools{display:grid;gap:8px}
+.tool{width:100%;text-align:left;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;cursor:pointer}
+.tool.danger{color:var(--danger)}
+.tool.armed{background:#B3261E;color:#fff;border-color:#B3261E}
+
+/* dialogs */
+dialog{border:0;border-radius:18px;padding:0;max-width:520px;width:calc(100% - 24px);background:var(--card);color:var(--fg);max-height:calc(100% - 24px)}
+dialog::backdrop{background:rgba(10,15,22,.6)}
+.dbody{padding:20px}
+.dtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.dtop .step{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+label{display:block;font-weight:700;margin:12px 0 6px}
+label small{font-weight:400;color:var(--mute)}
+.hint{color:var(--mute);font-size:14px;margin:-2px 0 8px}
+.field{width:100%;font:inherit;font-size:19px;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--fg)}
+.field:focus{outline:none;border-color:var(--accent)}
+.field.qn{width:110px;text-align:center;font-weight:700}
+.err{color:var(--danger);font-size:15px;min-height:20px;margin-top:8px}
+.ask{font-size:20px;font-weight:700;line-height:1.3;margin:4px 0 6px}
+.askhelp{color:var(--mute);font-size:15px;margin:0 0 16px}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.yn button{font:inherit;font-size:19px;font-weight:700;padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--btn);color:var(--fg);cursor:pointer}
+.yn button:active{background:var(--btn-press)}
+.result{background:var(--accent-soft);border:2px solid var(--accent);border-radius:14px;padding:16px;margin:4px 0 14px}
+.result .k{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+.result .n{font-size:24px;font-weight:700;margin:2px 0 6px}
+.result .ex{font-size:15px;color:var(--fg);margin:0 0 4px}
+.same{background:var(--ok-soft);border:2px solid var(--ok);border-radius:14px;padding:16px;margin-bottom:14px}
+.row2{display:flex;gap:10px;margin-top:10px}
+.row2 .big{flex:1}
+.ghost{flex:1;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:14px;font:inherit;font-weight:700;padding:14px;cursor:pointer}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.pick button{font:inherit;font-size:15px;text-align:left;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--btn);color:var(--fg);cursor:pointer}
+.kinds{display:grid;gap:10px;margin-top:12px}
+.kinds button{text-align:left;font:inherit;padding:16px;border-radius:14px;border:2px solid var(--line);background:var(--btn);color:var(--fg);cursor:pointer}
+.kinds button:active{background:var(--btn-press)}
+.kinds b{display:block;font-size:18px}
+.kinds span{display:block;color:var(--mute);font-size:14px;margin-top:2px}
+.reason:last-child:nth-child(odd),.pick button:last-child:nth-child(odd){grid-column:1/-1}
+.close{border:0;background:var(--bg);color:var(--fg);border-radius:999px;width:36px;height:36px;font-size:20px;cursor:pointer}
+.saved{text-align:center;padding:8px 0 4px}
+.saved .boom{font-size:52px;line-height:1}
+.saved .xpgain{display:inline-block;margin-top:6px;background:#F5B700;color:#16212E;font-weight:700;border-radius:999px;padding:3px 12px;animation:pop .4s}
+
+/* game screen */
+.dots{font-size:13px;letter-spacing:3px}
+.opts{display:grid;gap:8px;margin-top:12px}
+.opts button{font:inherit;font-size:17px;font-weight:700;text-align:left;padding:14px;border-radius:14px;border:2px solid var(--line);background:var(--btn);color:var(--fg);cursor:pointer}
+.opts.three button{text-align:center;padding:14px 4px;font-size:15px}
+.opts button.right{border-color:var(--ok);background:var(--ok-soft);animation:pop .3s}
+.opts button.wrong{border-color:var(--bad);background:var(--bad-soft);animation:shake .3s}
+.fb{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:16px}
+.fb.good{background:var(--ok-soft)}
+.fb.no{background:var(--bad-soft)}
+.end{text-align:center;padding:6px 0}
+.end .st{font-size:44px;letter-spacing:4px;color:#E0A800}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:20;overflow:hidden}
+.confetti i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;animation:fall 1.5s ease-in forwards}
+@keyframes fall{to{transform:translate(var(--dx),105vh) rotate(600deg)}}
+
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,140%);background:#16212E;color:#fff;border-radius:12px;padding:12px 14px 12px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:transform .2s;max-width:calc(100% - 32px);z-index:5;font-size:15px}
+.toast.show{transform:translate(-50%,0)}
+.toast button{background:none;border:0;color:#FFB27A;font:inherit;font-weight:700;cursor:pointer;padding:4px}
+#helpDlg .dbody ol{padding-left:22px;margin:0 0 12px}
+#helpDlg li{margin:6px 0}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Reading<br>Mistake Log</h1>
+    <button class="help" id="helpBtn" type="button">How to use</button>
+  </header>
+  <div class="stats" id="stats"></div>
+
+  <section class="card welcome" id="welcome" hidden>
+    <h2>Hi! 👋 Here's the plan</h2>
+    <ol>
+      <li>📝 Do a practice test.</li>
+      <li>🔍 Check each wrong answer here.</li>
+      <li>👾 Find your <b>boss mistake</b> and beat it with 30-second games.</li>
+    </ol>
+    <button type="button" id="welcomeOk">Let's go 🚀</button>
+  </section>
+
+  <section class="card">
+    <h2>Got a question wrong?</h2>
+    <p class="sub">Have your answers and the reading text ready. Do this for each wrong answer.</p>
+    <button class="big" type="button" id="detectBtn">🔍 Check a wrong answer</button>
+    <button class="link" type="button" id="quickToggle" aria-expanded="false">I already know why (quick mode)</button>
+    <div id="quick" hidden>
+      <div class="reasons" id="reasons"></div>
+    </div>
+    <div class="count" id="count"></div>
+  </section>
+
+  <section class="card">
+    <h2>Your top 3 mistakes</h2>
+    <p class="sub" id="topSub">#1 is your boss. Beat it first.</p>
+    <div class="top" id="top"></div>
+  </section>
+
+  <section class="card">
+    <h2>🎮 Practice games</h2>
+    <p class="sub">30 seconds each. Get ⭐⭐⭐ on all of them.</p>
+    <div class="games" id="games"></div>
+  </section>
+
+  <section class="card" id="whereCard" hidden>
+    <h2>Where you lose marks</h2>
+    <p class="sub" id="whereSub">From the question numbers and question types you entered. Passages are usually questions 1–13, 14–26 and 27–40.</p>
+    <div id="where"></div>
+  </section>
+
+  <section class="card" id="histCard" hidden>
+    <h2>My wrong answers</h2>
+    <p class="sub">Newest first.</p>
+    <ul class="hist" id="hist"></ul>
+    <button class="link" type="button" id="moreBtn" hidden>Show all</button>
+  </section>
+
+  <section class="card">
+    <h2>My scores</h2>
+    <p class="sub">After each test, type your score (out of 40).</p>
+    <div class="seg" id="modSeg" role="group" aria-label="Which test do you take?">
+      <button type="button" data-m="a">Academic</button><button type="button" data-m="g">General Training</button>
+    </div>
+    <form class="scoreform" id="scoreForm" autocomplete="off" novalidate>
+      <input id="scoreIn" type="number" inputmode="numeric" min="0" max="40" placeholder="e.g. 28" aria-label="Score out of 40">
+      <button class="primary" type="submit">Save</button>
+    </form>
+    <div class="bandnow" id="bandNow" aria-live="polite"></div>
+    <div class="chart" id="chart"></div>
+    <ul class="scores" id="scores"></ul>
+    <p class="note">Band tables from IDP IELTS. They show the average marks needed; the real marks can change a little between tests. Academic and General Training use different tables.</p>
+  </section>
+
+  <section class="card">
+    <h2>Share and save</h2>
+    <p class="sub">Send your top mistakes and scores to a teacher, a parent or a friend.</p>
+    <button class="big" type="button" id="shareBtn" style="background:var(--primary)">📤 Send my results</button>
+    <p class="sub" style="margin:18px 0 10px">Your data is saved only on this phone. <b>Changing phones?</b> Save a backup file here, then load it on the new phone. You don't need to open the file.</p>
+    <div class="tools">
+      <button class="tool" type="button" id="backupBtn">⬇︎ Save a backup file (for a new phone)</button>
+      <button class="tool" type="button" id="restoreBtn">⬆︎ Load a backup file (on the new phone)</button>
+      <input type="file" id="restoreIn" accept=".json,application/json" hidden>
+      <button class="tool danger" type="button" id="resetBtn">Start again (delete everything)</button>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button type="button" id="undoBtn">Undo</button></div>
+
+<!-- the mistake detective -->
+<dialog id="det" aria-label="Check a wrong answer">
+  <div class="dbody">
+    <div class="dtop"><span class="step" id="detStep">Step 1</span><button class="close" type="button" id="detClose" aria-label="Close">×</button></div>
+    <div id="detView"></div>
+  </div>
+</dialog>
+
+<!-- practice game -->
+<dialog id="drill" aria-label="Practice game">
+  <div class="dbody">
+    <div class="dtop"><span class="step" id="drStep">Game</span><button class="close" type="button" id="drClose" aria-label="Close">×</button></div>
+    <div id="drView"></div>
+  </div>
+</dialog>
+
+<dialog id="helpDlg" aria-label="How to use">
+  <div class="dbody">
+    <h2 style="margin-bottom:10px">How to use</h2>
+    <ol>
+      <li>Do one Reading practice test like the real exam: 60 minutes, no dictionary. Use real tests (Cambridge IELTS books are best).</li>
+      <li>Check your answers. Keep the <b>reading text</b> open next to you.</li>
+      <li>For <b>each wrong answer</b>, tap <b>Check a wrong answer</b>. Pick the kind of question, type your answer and the right answer. The app may ask you 1–3 easy yes/no questions.</li>
+      <li>Type your score out of 40 under <b>My scores</b>.</li>
+      <li>Look at <b>Your top 3 mistakes</b>. Before the next test, practise only the fix for #1, and play its game.</li>
+    </ol>
+    <p class="sub"><b>XP:</b> +10 for each wrong answer you check, +10 for each score, +5 for each right answer in a game. Use the app on different days to grow your 🔥 streak.</p>
+    <p class="sub"><b>Tip:</b> add this page to your home screen so it opens like an app. iPhone: Share → Add to Home Screen. Android: ⋮ → Add to Home screen.</p>
+    <p class="sub" style="font-size:13px">The tips are based on official IELTS guidance from <a href="https://ielts.idp.com/prepare/article-question-types-academic-reading" target="_blank" rel="noopener">IDP</a> and the <a href="https://takeielts.britishcouncil.org/sites/default/files/ielts_reading.pdf" target="_blank" rel="noopener">British Council</a>. Band tables: <a href="https://ielts.idp.com/thailand/results/scores/reading" target="_blank" rel="noopener">IDP IELTS</a>. Not affiliated with IELTS, IDP, the British Council or Cambridge.</p>
+    <form method="dialog"><button class="big" style="background:var(--primary)">Got it</button></form>
+  </div>
+</dialog>
+
+<script>
+const TFNG_PIC = `<div class="node">📝 Read the statement</div>
+  <div class="dn">↓</div>
+  <div class="node">🔍 Find the same place in the text</div>
+  <div class="dn">↙ ↓ ↘</div>
+  <div class="tri">
+    <div class="leaf ok">Says the same<b>✅ TRUE</b></div>
+    <div class="leaf bad">Says the opposite<b>❌ FALSE</b></div>
+    <div class="leaf ng">Says nothing<b>🤷 NOT GIVEN</b></div>
+  </div>
+  <div class="vrow" style="margin-top:10px"><span class="ch">some ≠ all</span><span class="ch">often ≠ always</span><span class="ch">claims ≠ proves</span></div>
+  <div class="cap">Small words change the answer</div>`;
+const TF3 = ["TRUE","FALSE","NOT GIVEN"], YN3 = ["YES","NO","NOT GIVEN"];
+const REASONS = [
+  {e:"✍️", name:"Spelling or -s", hint:"Right word, written wrong",
+   why:"You found the right word, but the spelling or the -s was wrong.",
+   short:"Copy the word from the text, letter by letter.",
+   pic:`<div class="vrow"><span class="ch">a</span><span class="ar">→</span><span class="ch ok">increase ✅</span><span class="ch">many</span><span class="ar">→</span><span class="ch ok">increase<b>s</b> ✅</span></div>
+        <div class="vrow"><span class="ch">the ___ growth</span><span class="ar">→</span><span class="ch ok">economic ✅</span><span class="ch bad">economy ❌</span></div>
+        <div class="cap">One or many? · Does the word fit the sentence?</div>`,
+   steps:["👆 Copy the word letter by letter","🔢 One or many? Check the -s","🧩 Does the word form fit the gap?"],
+   more:"Check the right form of the word (economy or economic?). Keep a notebook of words you misspell.",
+   drill:[
+    {q:"“The study found a sharp ___ in sales.”", o:["increase","increases"], a:0, w:"a = one → increase."},
+    {q:"“Many ___ moved to the city.”", o:["family","families"], a:1, w:"many = more than one → families."},
+    {q:"“The ___ growth was slow.”", o:["economy","economic"], a:1, w:"Before a noun (growth) you need an adjective → economic."},
+    {q:"“Bees play a key role in ___.”", o:["pollination","pollinate"], a:0, w:"After “in” you need a noun → pollination."},
+    {q:"“Several ___ were found in the cave.”", o:["tool","tools"], a:1, w:"several = many → tools."}]},
+  {e:"📏", name:"Too many words", hint:"Broke the word limit",
+   why:"You wrote more words than the question allows.",
+   short:"Count every word. a, an and the count too.",
+   pic:`<div class="vrow"><span class="circ">NO MORE THAN TWO WORDS</span></div>
+        <div class="vrow"><span class="ch ok">wooden boats ✅ 2</span><span class="ch bad">the wooden boats ❌ 3</span></div>
+        <div class="vrow"><span class="ch">red and yellow = 3 words</span></div>`,
+   steps:["⭕ Circle the word limit first","🔢 Count: a, an, the, and all count","📋 “From the text” = copy, don't change"],
+   more:"A number counts as one word. If it says 'from the text', use the words from the text.",
+   drill:[
+    {q:"NO MORE THAN TWO WORDS. Which is OK?", o:["the wooden boats","wooden boats"], a:1, w:"“the” counts. “the wooden boats” is three words."},
+    {q:"ONE WORD ONLY. Which is OK?", o:["rain","heavy rain"], a:0, w:"“heavy rain” is two words."},
+    {q:"How many words is “red and yellow”?", o:["2","3"], a:1, w:"“and” counts: red + and + yellow = 3."},
+    {q:"ONE WORD AND/OR A NUMBER. Is “1850 farmers” OK?", o:["Yes ✅","No ❌"], a:0, keep:true, w:"One number + one word is allowed."},
+    {q:"NO MORE THAN THREE WORDS. Which is OK?", o:["a small fishing village","small fishing village"], a:1, w:"“a” counts, so the first one is four words."}]},
+  {e:"🤷", name:"Not Given mix-up", hint:"True, False or Not Given confusion",
+   why:"You mixed up Not Given with True or False.",
+   short:"FALSE = the text says the opposite. NOT GIVEN = the text says nothing.",
+   pic:TFNG_PIC,
+   steps:["🔍 Find the place in the text","🔤 Watch small words: only, some, always, claims","🚫 Never use what you already know"],
+   more:"Same words don't make it True: check the meaning. Watch words like some, mainly, always and claimed, suggests, believes. In Yes/No/Not Given, only the writer's opinion counts, not other people's.",
+   drill:[
+    {t:"Text: The bridge was opened in 1932.", q:"Statement: The bridge opened in the 1930s.", o:TF3, a:0, keep:true, w:"1932 is in the 1930s. Same meaning → TRUE."},
+    {t:"Text: The bridge was opened in 1932.", q:"Statement: The bridge opened in 1925.", o:TF3, a:1, keep:true, w:"The text gives a different year. Opposite → FALSE."},
+    {t:"Text: The bridge was opened in 1932.", q:"Statement: The bridge was expensive to build.", o:TF3, a:2, keep:true, w:"The text says nothing about cost → NOT GIVEN."},
+    {t:"Text: Only a few visitors came to the museum in winter.", q:"Statement: The museum was busy in winter.", o:TF3, a:1, keep:true, w:"“Only a few” is the opposite of busy → FALSE."},
+    {t:"Text: Tea was brought to Britain in the 1600s.", q:"Statement: Tea is more popular than coffee in Britain.", o:TF3, a:2, keep:true, w:"Maybe you know this, but the text doesn't say it → NOT GIVEN."},
+    {t:"Text: The plant grows only in hot, dry places.", q:"Statement: The plant can grow in cold places.", o:TF3, a:1, keep:true, w:"“only in hot places” = not in cold places → FALSE."},
+    {t:"Text: The library holds over two million books.", q:"Statement: The library has more than a million books.", o:TF3, a:0, keep:true, w:"Two million is more than a million → TRUE."},
+    {t:"The writer says: “In my view, the new rule is a mistake.”", q:"Statement: The writer supports the new rule.", o:YN3, a:1, keep:true, w:"The writer thinks it's a mistake. Opposite view → NO."}]},
+  {e:"🪤", name:"Keyword trap", hint:"Picked it because the words matched",
+   why:"You picked the answer because it used the same words as the text, but the meaning was different.",
+   short:"Same words ≠ same meaning.",
+   pic:`<div class="snip">“Many people think sugar makes kids hyperactive, <mark>but</mark> studies found <b>no link</b>.”</div>
+        <div class="dn">↓</div>
+        <div class="vrow"><span class="ch bad">Sugar makes kids hyperactive ❌</span></div>
+        <div class="vrow"><span class="ch ok">There is no proven link ✅</span></div>
+        <div class="cap">The trap copies the words. The answer copies the meaning.</div>`,
+   steps:["📖 Read the whole sentence, not just the matching word","⚠️ Watch: but, however, although, not"],
+   more:"In a word list, an option copied straight from the text is often a trap.",
+   drill:[
+    {t:"“Many people believe sugar makes children hyperactive, but research has found no link.”", q:"What did research find?", o:["Sugar makes children hyperactive","There is no link"], a:1, w:"“but” turns it around. Research found no link."},
+    {t:"“Although the town is famous for its fish market, most jobs are now in tourism.”", q:"Most jobs are in…", o:["fishing","tourism"], a:1, w:"“Although” = the fish market is not the answer."},
+    {t:"“The project was not cancelled. It was delayed until spring.”", q:"What happened to the project?", o:["It was cancelled","It was delayed"], a:1, w:"The word “cancelled” is there, but with “not”."},
+    {t:"“Unlike wolves, foxes usually hunt alone.”", q:"Foxes usually hunt…", o:["in groups","alone"], a:1, w:"“Unlike wolves” = wolves hunt in groups, foxes don't."},
+    {t:"“It was once thought that the Earth was flat, but this idea was rejected long ago.”", q:"The writer says the Earth is flat.", o:["Yes","No"], a:1, keep:true, w:"“was once thought… but rejected” = not the writer's view."}]},
+  {e:"🔁", name:"Different words", hint:"The text said it in other words",
+   why:"The text said the answer with different words from the question, so you didn't notice it.",
+   short:"The text says it with other words.",
+   pic:`<div class="vrow"><span class="ch">❓ cheap</span><span class="ar">⇄</span><span class="ch">📖 low-cost</span></div>
+        <div class="vrow"><span class="ch">❓ children</span><span class="ar">⇄</span><span class="ch">📖 young people</span></div>
+        <div class="vrow"><span class="ch">❓ decrease</span><span class="ar">⇄</span><span class="ch">📖 fall</span></div>
+        <div class="cap">❓ = question · 📖 = text</div>`,
+   steps:["✏️ Underline 2 key words in the question","💭 Think of other ways to say them","📋 After the test, list the pairs"],
+   more:"Write each pair (question word → text word) in a list and review it.",
+   drill:[
+    {q:"The question says “decrease”. The text might say…", o:["fall","rise"], a:0, w:"decrease = fall."},
+    {q:"The question says “elderly people”. The text might say…", o:["senior citizens","teenagers"], a:0, w:"elderly = old = senior."},
+    {q:"The question says “important”. The text might say…", o:["significant","minor"], a:0, w:"significant = important. minor = small."},
+    {q:"The question says “ancient”. The text might say…", o:["very old","modern"], a:0, w:"ancient = very old."},
+    {q:"The question says “reduce costs”. The text might say…", o:["cut spending","spend more"], a:0, w:"reduce = cut, costs = spending."},
+    {q:"The question says “cause”. The text might say…", o:["lead to","prevent"], a:0, w:"X causes Y = X leads to Y."}]},
+  {e:"📍", name:"Wrong part of the text", hint:"Looked in the wrong place",
+   why:"You took the answer from the wrong part of the text, or couldn't find the right part.",
+   short:"Find the place first, then answer.",
+   pic:`<div class="vrow"><span class="ch">Q1</span><span class="ch">Q2</span><span class="ch">Q3</span></div>
+        <div class="dn">↓ ↓ ↓</div>
+        <div class="vrow"><span class="ch">¶ A</span><span class="ch">¶ B</span><span class="ch">¶ C</span></div>
+        <div class="cap">Many question types follow the order of the text</div>
+        <div class="vrow" style="margin-top:10px"><span class="ch">📰 Headings:</span><span class="ch">read the paragraph</span><span class="ar">→</span><span class="ch">sum it up in 1–2 words</span><span class="ar">→</span><span class="ch ok">match</span></div>`,
+   steps:["🔎 Use names, numbers and Capital Letters to find the place","➡️ Many types follow the text order","📰 Headings: read the paragraph first, not the headings"],
+   more:"Multiple choice, sentence completion and short answers follow the order of the text. Matching, summary and table answers can be anywhere. For headings, underline the key words in the headings, match the easy ones first, and for the hard ones write 2–3 possible headings and read again.",
+   drill:[
+    {q:"To find the right place fast, look for…", o:["names, numbers, Capital Letters","the longest words"], a:0, w:"They are easy to spot and rarely change."},
+    {q:"The Q5 answer was in paragraph C. Q6 (sentence completion) is probably…", o:["in C or after it","in paragraph A"], a:0, w:"Sentence completion follows the order of the text."},
+    {q:"Matching headings: what do you do first?", o:["Read the paragraph and sum it up","Read all the headings first"], a:0, w:"Know the main idea first, then look at the headings."},
+    {q:"“Which paragraph contains…” (matching information) answers are…", o:["in any order","always in order"], a:0, w:"Matching information can be anywhere."},
+    {q:"A heading uses the same word as one sentence in the paragraph. It's…", o:["maybe a trap: check the main idea","surely right"], a:0, w:"A heading is about the whole paragraph, not one word."}]},
+  {e:"⏱️", name:"Ran out of time", hint:"Guessed or didn't reach it",
+   why:"You guessed or didn't reach this question because time ran out.",
+   short:"About 20 minutes per passage. Passage 3 needs the most.",
+   pic:`<div class="tbar"><span style="flex:17">P1 · 17 min</span><span style="flex:20">P2 · 20 min</span><span style="flex:23">P3 · 23 min</span></div>
+        <div class="cap">60 minutes · no extra time to copy answers</div>`,
+   steps:["⏭️ Stuck? Skip it, come back later","✍️ Write answers on the sheet as you go","🎯 Never leave an answer empty"],
+   more:"If you often run out of time, the real fix is usually more vocabulary and practice with each question type, not a faster clock.",
+   drill:[
+    {q:"You've been stuck on one question for 3 minutes. What do you do?", o:["Skip it, come back later","Keep trying"], a:0, w:"One question = one mark. Don't lose five for it."},
+    {q:"Is there extra time to copy answers onto the answer sheet?", o:["Yes, 10 minutes","No, write as you go"], a:1, w:"In Reading there's no extra time. Listening on paper has it, Reading doesn't."},
+    {q:"Time is almost up and Q40 is empty. What do you do?", o:["Leave it empty","Guess"], a:1, w:"You don't lose marks for wrong answers."},
+    {q:"Which passage usually needs the most time?", o:["Passage 1","Passage 3"], a:1, w:"Passage 3 is the hardest."},
+    {q:"You often run out of time. The best long-term fix is…", o:["more vocabulary and practice","reading faster without understanding"], a:0, w:"Knowing more words makes you faster naturally."}]},
+  {e:"📚", name:"New word", hint:"I didn't know a key word",
+   why:"A key word in the text or question was new to you.",
+   short:"First ask: do I even need this word?",
+   pic:`<div class="snip">“The <mark>drought</mark> lasted two years. No rain fell at all.”</div>
+        <div class="dn">↓</div>
+        <div class="vrow"><span class="ch ok">💡 drought = a long time with no rain</span></div>
+        <div class="cap">The words around it give the meaning</div>`,
+   steps:["🤔 Do I need this word to answer? Often no","🔍 If yes, guess from the words around it","📖 Read in English 10–15 min a day"],
+   more:"Keep a notebook with the meaning and the sentence you found it in, and review it every week.",
+   drill:[
+    {t:"“The drought lasted two years. No rain fell at all.”", q:"drought = ?", o:["a long time with no rain","a big flood"], a:0, w:"“No rain fell” gives the meaning."},
+    {t:"“Wolves are predators: they hunt and eat other animals.”", q:"predators = ?", o:["animals that hunt others","animals that are hunted"], a:0, w:"“they hunt and eat other animals”."},
+    {t:"“The results were inconclusive, so more research is needed.”", q:"inconclusive = ?", o:["not clear yet","very clear"], a:0, w:"“more research is needed” = no clear answer yet."},
+    {t:"“The city is densely populated, with millions living close together.”", q:"densely populated = ?", o:["lots of people in a small area","almost empty"], a:0, w:"“millions living close together”."},
+    {q:"Do you need to know every word in a passage?", o:["No, often you can skip it","Yes, always"], a:0, w:"Only words that the question needs matter."}]},
+  {e:"🔎", name:"Read the question wrong", hint:"Missed NOT, only, all…",
+   why:"You missed a small but important word in the question.",
+   short:"Circle the small words: NOT, only, all, TWO.",
+   pic:`<div class="vrow">Which is <span class="circ">NOT</span> mentioned?</div>
+        <div class="vrow">Choose <span class="circ">TWO</span> letters.</div>
+        <div class="vrow">Bees <span class="circ">only</span> live in hot places.</div>
+        <div class="cap">One small word changes the whole answer</div>`,
+   steps:["⭕ Circle: NOT, only, all, always, never, TWO","👀 Read the question twice"],
+   more:"Also watch for some, most, and questions that ask for the writer's opinion.",
+   drill:[
+    {q:"“Which TWO advantages are mentioned?” How many letters do you write?", o:["1","2"], a:1, keep:true, w:"TWO = two letters."},
+    {q:"“Which of these is NOT mentioned?” You look for…", o:["the one that's missing from the text","the one in the text"], a:0, w:"NOT turns the question around."},
+    {t:"Text: Bees live in most parts of the world.", q:"Statement: Bees ONLY live in hot countries.", o:TF3, a:1, keep:true, w:"“only” makes it false. Bees live almost everywhere."},
+    {q:"“Choose ONE WORD ONLY from the passage.” Can you change the word's form?", o:["No, copy it exactly","Yes, if it fits better"], a:0, w:"“from the passage” = copy it exactly."},
+    {q:"“According to the writer…” Whose view counts?", o:["the writer's","the scientists' in the text"], a:0, w:"Only the writer's opinion counts here."}]}
+];
+const R = {SPELL:0, WORDS:1, NG:2, TRAP:3, DIFF:4, PLACE:5, TIME:6, NEW:7, QUES:8};
+const BANDS = {
+  a:[[39,9],[37,8.5],[35,8],[32,7.5],[30,7],[26,6.5],[23,6],[18,5.5],[16,5],[13,4.5],[11,4]],   // IDP IELTS Academic Reading table
+  g:[[40,9],[39,8.5],[37,8],[36,7.5],[34,7],[32,6.5],[30,6],[27,5.5],[23,5],[19,4.5],[15,4]] };
+const RECENT = 40;
+const KEY = "rml-v2", OLDKEY = "rml-v1";
+const band = (raw, m) => { for (const [min,b] of BANDS[m || state.module || "a"]) if (raw >= min) return b.toFixed(1); return "below 4"; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function mapHTML(){ return `<div class="map"><span>A</span><span>B</span><span>C</span><span>D</span><span class="path">path ↑</span><span>E</span><span>F</span><span class="door">🚪 Entrance<br>📍 you</span><span>G</span></div><div class="cap">↑ North</div>`; }
+
+/* ---------- automatic checks ---------- */
+const norm = s => s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim();
+function lev(a,b){ // edit distance where swapping two neighbouring letters counts as 1
+  const m=a.length,n=b.length, d=[...Array(m+1)].map((_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++){
+    const c = a[i-1]===b[j-1]?0:1;
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);
+    if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1);
+  }
+  return d[m][n]; }
+function plural(a,b){ // true if a and b differ only by a plural ending
+  const f=(x,y)=> y===x+"s" || y===x+"es" || (x.endsWith("y") && y===x.slice(0,-1)+"ies");
+  return f(a,b) || f(b,a); }
+// returns {r: reason index} | {same:true} | null (needs questions)
+function autoCheck(mine, right){
+  const a = norm(mine), b = norm(right);
+  if (!b) return null;
+  if (a === b) return {same:true};
+  if (!a) return null;
+  const aw = a.split(" "), bw = b.split(" ");
+  // extra words around the right answer -> word limit
+  if (aw.length > bw.length && (" "+a+" ").includes(" "+b+" ")) return {r:R.WORDS};
+  if (aw.length === bw.length){
+    const diff = aw.map((w,i)=>[w,bw[i]]).filter(([x,y])=>x!==y);
+    if (diff.length === 1){
+      const [x,y] = diff[0];
+      if (plural(x,y)) return {r:R.SPELL};
+      if (/^\d+$/.test(x) || /^\d+$/.test(y)) return null;
+      const d = lev(x,y);
+      // 1 slip for normal words, 2 only for long words (so Tuesday/Thursday is NOT spelling)
+      if (y.length >= 4 && d <= (y.length >= 9 ? 2 : 1)) return {r:R.SPELL};
+    }
+  }
+  return null;
+}
+
+/* ---------- the yes/no questions ---------- */
+// each node: question, help text, yes -> next, no -> next (number = reason index)
+const ASK_TIME = { q:"Did you guess this one because time was running out?", h:"" };
+const ASK_DIFF = { q:"Find the answer in the text. Did the text say it with different words from the question?", h:"For example, the question says 'cheap' but the text says 'low cost'." };
+// words: wrote something wrong
+const TREE_WROTE = { ...ASK_TIME, yes:R.TIME,
+  no:{ q:"Find the answer in the text. Were you looking in the right part of the text?", h:"", no:R.PLACE,
+       yes:{ q:"Did you know all the important words in that sentence?", h:"Be honest. It's fine if some were new.", no:R.NEW,
+             yes:{ ...ASK_DIFF, yes:R.DIFF, no:R.QUES } } } };
+// words: left empty
+const TREE_EMPTY = { ...ASK_TIME, yes:R.TIME,
+  no:{ q:"Could you find where the answer was in the text?", h:"", no:R.PLACE,
+       yes:{ q:"Did you know all the important words there?", h:"", no:R.NEW, yes:R.DIFF } } };
+// letters: multiple choice / matching
+const TREE_LETTER = { ...ASK_TIME, yes:R.TIME,
+  no:{ q:"Did the option YOU chose use the same words as the text?", h:"Same words but a different meaning is a common trap.", yes:R.TRAP,
+       no:{ ...ASK_DIFF, h:"For example, the option says 'too expensive' but the text says 'they couldn't afford it'.", yes:R.DIFF,
+            no:{ q:"Did you misread the question? (for example, it asked for NOT true, or for the writer's opinion)", h:"", yes:R.QUES, no:R.PLACE } } } };
+// headings
+const TREE_HEAD = { ...ASK_TIME, yes:R.TIME,
+  no:{ q:"Did you pick your heading because it had the same word as the paragraph?", h:"", yes:R.TRAP,
+       no:{ q:"Did you choose the heading before you understood the main idea of the paragraph?", h:"For example, you looked at the headings first, or read only one sentence.", yes:R.PLACE,
+            no:{ q:"Did you know all the important words in the paragraph?", h:"", no:R.NEW, yes:R.DIFF } } } };
+// True / False / Not Given
+function treeTFNG(){
+  const ng = det.mine === "NOT GIVEN" || det.right === "NOT GIVEN";
+  if (!det.mine) return { ...ASK_TIME, yes:R.TIME, no:R.PLACE };
+  return { ...ASK_TIME, yes:R.TIME,
+    no: ng ? R.NG : { q:"Did the question have a small word like only, all, always, never or some that you missed?", h:"These small words often decide True or False.", yes:R.QUES,
+                      no:{ ...ASK_DIFF, yes:R.DIFF, no:R.PLACE } } };
+}
+const TF = ["TRUE / YES","FALSE / NO","NOT GIVEN"];
+const KINDS = {
+  t:{label:"True / False / Not Given", short:"True/False/NG", sub:"Also Yes / No / Not Given"},
+  w:{label:"I wrote words", short:"Writing words", sub:"Sentence, summary, note, table or flow-chart completion, diagram labels, short answers"},
+  l:{label:"I chose a letter", short:"Choosing a letter", sub:"Multiple choice, matching information, features or sentence endings, or a box of words (A, B, C…)"},
+  h:{label:"Matching headings", short:"Headings", sub:"Answers like i, ii, iii, iv"}
+};
+
+/* ---------- state ---------- */
+const blank = () => ({mistakes:[], scores:[], seenWelcome:false, xp:0, days:[], best:{}, module:"a"});
+let state = blank();
+function load(){
+  try{
+    let s = JSON.parse(localStorage.getItem(KEY));
+    if (!s){ // first time on v2: bring over the old data and give XP for it
+      const old = JSON.parse(localStorage.getItem(OLDKEY));
+      if (old && Array.isArray(old.mistakes)) s = Object.assign(old, {xp: old.mistakes.length*10 + (old.scores||[]).length*10});
+    }
+    if (s && Array.isArray(s.mistakes)) state = Object.assign(blank(), s);
+  }catch(e){}
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+const $ = id => document.getElementById(id);
+
+let undo = null, toastTimer = null;
+function toast(msg, undoFn){
+  $("toastMsg").textContent = msg; undo = undoFn; $("undoBtn").hidden = !undoFn;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>$("toast").classList.remove("show"), 4000);
+}
+$("undoBtn").onclick = () => { if (undo) undo(); undo = null; $("toast").classList.remove("show"); };
+
+/* ---------- XP, levels, streak ---------- */
+const LEVELS = [[0,"Rookie"],[100,"Spotter"],[250,"Detective"],[450,"Sharp Eye"],[700,"Mistake Hunter"],[1000,"Band Booster"],[1400,"IELTS Ninja"],[2000,"Legend"]];
+const lvl = xp => { let i = 0; LEVELS.forEach(([min],k) => { if (xp >= min) i = k; }); return i; };
+const dayKey = d => `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+function streak(){
+  const set = new Set(state.days), d = new Date();
+  if (!set.has(dayKey(d))) d.setDate(d.getDate()-1); // today not done yet: yesterday still counts
+  let n = 0; while (set.has(dayKey(d))){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function addXP(n){
+  const before = lvl(state.xp);
+  state.xp = Math.max(0, state.xp + n);
+  const k = dayKey(new Date());
+  if (!state.days.includes(k)){ state.days.push(k); state.days = state.days.slice(-120); }
+  save(); renderStats();
+  if (lvl(state.xp) > before){ toast(`⬆️ Level up! You're now: ${LEVELS[lvl(state.xp)][1]}`); confetti(); }
+}
+function renderStats(){
+  const i = lvl(state.xp), [min,title] = LEVELS[i], next = LEVELS[i+1];
+  const pct = next ? Math.round((state.xp-min)/(next[0]-min)*100) : 100, s = streak();
+  $("stats").innerHTML = `${s ? `<span class="pill">🔥 ${s} day${s>1?"s":""}</span>` : ""}<span class="pill">⭐ ${title}</span>
+    <span class="xpwrap"><span class="xpbar" title="${state.xp} XP"><i style="width:${pct}%"></i></span><span class="xpn">${next ? `${state.xp}/${next[0]} XP` : `${state.xp} XP`}</span></span>`;
+}
+function confetti(){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const box = document.createElement("div"); box.className = "confetti";
+  const C = ["#E07A2F","#F5B700","#1B7F3B","#2F7FD0","#D6336C","#0E7C7B"];
+  for (let k = 0; k < 36; k++){
+    const p = document.createElement("i");
+    p.style.left = Math.random()*100 + "%"; p.style.background = C[k % C.length];
+    p.style.animationDelay = (Math.random()*.35) + "s"; p.style.setProperty("--dx", (Math.random()*160-80) + "px");
+    box.appendChild(p);
+  }
+  (document.querySelector("dialog[open]") || document.body).appendChild(box);
+  setTimeout(()=>box.remove(), 2100);
+}
+
+function addMistake(m){ state.mistakes.push(Object.assign({d:Date.now()}, m)); save(); renderAll(); }
+const counts = list => { const c = REASONS.map(()=>0); list.forEach(m => c[m.r]++); return c; };
+const topOrder = () => counts(state.mistakes.slice(-RECENT)).map((n,i)=>[n,i]).filter(x=>x[0]>0).sort((a,b)=>b[0]-a[0] || a[1]-b[1]);
+const label = i => `${REASONS[i].e} ${REASONS[i].name}`;
+const fixHTML = (i, withShort) => { const r = REASONS[i]; return `${withShort ? `<p class="short">${r.short}</p>` : ""}
+  <div class="vis">${r.pic}</div>
+  <ul class="steps">${r.steps.map(s=>`<li>${s}</li>`).join("")}</ul>
+  <details class="more"><summary>Read more</summary><p>${r.more}</p></details>`; };
+
+/* ---------- detective flow ---------- */
+let det = {};
+const fresh = () => ({kind:"", q:"", mine:"", right:"", mineSet:false, rightSet:false});
+function openDetective(){ det = fresh(); showKind(); $("det").showModal(); }
+function setStep(t){ $("detStep").textContent = t; }
+function showKind(){
+  setStep("Step 1 of 3");
+  $("detView").innerHTML = `
+    <p class="ask">What kind of question was it?</p>
+    <div class="kinds">${Object.entries(KINDS).map(([k,v])=>`<button type="button" data-k="${k}"><b>${v.label}</b><span>${v.sub}</span></button>`).join("")}</div>`;
+  $("detView").querySelector(".kinds").onclick = e => { const b = e.target.closest("button"); if (b){ det.kind = b.dataset.k; showForm(); } };
+}
+function showForm(err){
+  setStep("Step 2 of 3");
+  const k = det.kind, short = k === "l" || k === "h";
+  const qField = `
+      <label for="fQ">Which question did you get wrong?</label>
+      <p class="hint">Type its number. For example, if you got question 25 wrong, type 25.</p>
+      <input class="field qn" id="fQ" type="number" inputmode="numeric" min="1" max="40" placeholder="25" value="${esc(det.q)}">`;
+  let ans;
+  if (k === "t"){
+    const chips = (id, withEmpty) => `<div class="chips" id="${id}">${TF.map(t=>`<button type="button" data-v="${t === "NOT GIVEN" ? t : t.split(" / ")[0]}">${t}</button>`).join("")}${withEmpty ? `<button type="button" data-v="">I left it empty</button>` : ""}</div>`;
+    ans = `<label>What did you choose?</label>${chips("cMine", true)}<label>What is the right answer?</label>${chips("cRight", false)}`;
+  } else {
+    const ph = k === "h" ? ["iv","vi"] : k === "l" ? ["B","C"] : ["Leave empty if you wrote nothing","From the answer key"];
+    ans = `
+      <label for="fMine">${k === "w" ? "What did you write?" : k === "h" ? "Which heading did you choose?" : "Which letter did you choose?"}</label>
+      <input class="field ${short ? "qn" : ""}" id="fMine" type="text" autocapitalize="${k === "l" ? "characters" : "off"}" spellcheck="false" maxlength="${short ? 5 : 60}" placeholder="${ph[0]}" value="${esc(det.mine)}">
+      <label for="fRight">${k === "w" ? "What is the right answer?" : k === "h" ? "Which heading is right?" : "Which letter is right?"}</label>
+      <input class="field ${short ? "qn" : ""}" id="fRight" type="text" autocapitalize="${k === "l" ? "characters" : "off"}" spellcheck="false" maxlength="${short ? 5 : 60}" placeholder="${ph[1]}" value="${esc(det.right)}">`;
+  }
+  $("detView").innerHTML = `<form id="detForm" novalidate autocomplete="off">${qField}${ans}
+      <div class="err" id="fErr">${err ? esc(err) : ""}</div>
+      <button class="big" type="submit">Next</button>
+      <button class="link" type="button" id="bk">← Back</button></form>`;
+  if (k === "t"){
+    const pick = (id, key) => { const box = $(id);
+      const mark = () => box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(det[key+"Set"] && b.dataset.v === det[key])));
+      box.onclick = e => { const b = e.target.closest("button"); if (!b) return; det[key] = b.dataset.v; det[key+"Set"] = true; mark(); };
+      mark(); };
+    pick("cMine","mine"); pick("cRight","right");
+  }
+  $("bk").onclick = () => showKind();
+  $("detForm").onsubmit = e => {
+    e.preventDefault();
+    det.q = $("fQ").value.trim();
+    if (k !== "t"){ det.mine = $("fMine").value.trim(); det.right = $("fRight").value.trim(); }
+    if (k === "l"){ det.mine = det.mine.toUpperCase(); det.right = det.right.toUpperCase(); }
+    if (k === "h"){ det.mine = det.mine.toLowerCase(); det.right = det.right.toLowerCase(); }
+    const qn = Number(det.q);
+    if (det.q && (!Number.isInteger(qn) || qn < 1 || qn > 40)) return showForm("The question number must be between 1 and 40.");
+    if (k === "t" && !det.mineSet) return showForm("Please tap what you chose.");
+    if (!det.right) return showForm(k === "t" ? "Please tap the right answer." : k === "w" ? "Please type the right answer." : k === "h" ? "Please type the right heading." : "Please type the right letter.");
+    if (k === "w"){
+      const auto = autoCheck(det.mine, det.right);
+      if (auto && auto.same) return showSame();
+      if (auto) return showResult(auto.r, true);
+      return showQuestion(det.mine ? TREE_WROTE : TREE_EMPTY, []);
+    }
+    if (det.mine && det.mine === det.right) return showSame();
+    showQuestion(k === "t" ? treeTFNG() : k === "h" ? TREE_HEAD : TREE_LETTER, []);
+  };
+  setTimeout(()=>{ const f = $("fQ"); if (f && !det.q) f.focus(); }, 50);
+}
+function showSame(){
+  setStep("Check again");
+  $("detView").innerHTML = `
+    <div class="same"><b>These look the same.</b><br>“${esc(det.mine)}” and “${esc(det.right)}”. Maybe your answer was right? Check the answer key again, or fix what you typed.</div>
+    <div class="row2"><button class="ghost" type="button" id="bk">Change answers</button><button class="big" type="button" id="cl">Close</button></div>`;
+  $("bk").onclick = () => showForm(); $("cl").onclick = () => $("det").close();
+}
+function showQuestion(node, path){
+  setStep("Step 3 of 3 · question " + (path.length + 1));
+  $("detView").innerHTML = `
+    <p class="ask">${node.q}</p>
+    <p class="askhelp">${node.h}</p>
+    <div class="yn"><button type="button" id="yY">Yes</button><button type="button" id="yN">No</button></div>
+    <button class="link" type="button" id="bk">← Back</button>`;
+  const go = next => typeof next === "number" ? showResult(next, false) : showQuestion(next, path.concat(node));
+  $("yY").onclick = () => go(node.yes);
+  $("yN").onclick = () => go(node.no);
+  $("bk").onclick = () => path.length ? showQuestion(path[path.length-1], path.slice(0,-1)) : showForm();
+}
+function showResult(r, auto, picking){
+  setStep("Result");
+  const R0 = REASONS[r];
+  const what = det.mine ? `You ${det.kind === "w" ? "wrote" : "chose"} “${esc(det.mine)}”. The answer is “${esc(det.right)}”.` : `You left it empty. The answer is “${esc(det.right)}”.`;
+  $("detView").innerHTML = `
+    <div class="result">
+      <div class="k">${auto ? "Found it" : "This was"}${det.q ? " · Q" + esc(det.q) : ""}</div>
+      <div class="n">${label(r)}</div>
+      <p class="ex">${what} ${R0.why}</p>
+      ${fixHTML(r)}
+    </div>
+    <button class="big" type="button" id="sv">Save (+10 XP)</button>
+    <button class="link" type="button" id="ch">That's not right, let me choose</button>
+    <div class="pick" id="pick" ${picking ? "" : "hidden"}>${REASONS.map((x,i)=>`<button type="button" data-i="${i}">${label(i)}</button>`).join("")}</div>`;
+  $("sv").onclick = () => {
+    addMistake({r, k: det.kind, q: det.q ? Number(det.q) : null, mine: det.mine, right: det.right});
+    addXP(10);
+    showSaved(r);
+  };
+  $("ch").onclick = () => { $("pick").hidden = !$("pick").hidden; };
+  $("pick").onclick = e => { const b = e.target.closest("button"); if (b) showResult(+b.dataset.i, false, false); };
+}
+function showSaved(r){
+  setStep("Saved");
+  const n = state.mistakes.length;
+  $("detView").innerHTML = `
+    <div class="saved"><div class="boom">🎉</div><p class="ask">Saved: ${label(r)}</p><span class="xpgain">+10 XP</span>
+    <p class="sub" style="margin-top:8px">${n} wrong answer${n>1?"s":""} checked so far.</p></div>
+    <button class="big" type="button" id="pl" style="background:var(--primary)">🎮 Practise this now (30 sec)</button>
+    <div class="row2"><button class="ghost" type="button" id="nx">Next wrong answer</button><button class="ghost" type="button" id="dn">I'm done</button></div>`;
+  confetti();
+  $("pl").onclick = () => { $("det").close(); openDrill(r); };
+  $("nx").onclick = () => { det = fresh(); showKind(); };
+  $("dn").onclick = () => $("det").close();
+}
+$("detectBtn").onclick = openDetective;
+$("detClose").onclick = () => $("det").close();
+
+/* ---------- practice games ---------- */
+const shuffle = a => { for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
+let dr = {};
+function openDrill(i){ dr = {i, items: shuffle(REASONS[i].drill.slice()).slice(0,3), n:0, ok:0}; showDrillQ(); if (!$("drill").open) $("drill").showModal(); }
+function showDrillQ(){
+  const it = dr.items[dr.n], order = it.keep ? it.o.map((_,k)=>k) : shuffle(it.o.map((_,k)=>k));
+  const three = it.o.length >= 3 || it.o.every(o => o.length <= 6);
+  $("drStep").innerHTML = `${label(dr.i)} · <span class="dots">${dr.items.map((_,k)=> k < dr.n ? "●" : k === dr.n ? "◉" : "○").join("")}</span>`;
+  $("drView").innerHTML = `
+    ${it.pic ? `<div class="vis">${it.pic}</div>` : ""}
+    ${it.t ? `<div class="snip">${it.t}</div>` : ""}
+    <p class="ask">${it.q}</p>
+    <div class="opts ${three ? "three" : ""}" id="opts" ${three ? `style="grid-template-columns:repeat(${it.o.length},1fr)"` : ""}>${order.map(k=>`<button type="button" data-k="${k}">${it.o[k]}</button>`).join("")}</div>
+    <div id="drFb"></div>`;
+  $("opts").onclick = e => {
+    const b = e.target.closest("button"); if (!b || dr.done) return;
+    dr.done = true;
+    const k = +b.dataset.k, good = k === it.a;
+    if (good) dr.ok++;
+    $("opts").querySelectorAll("button").forEach(x => { if (+x.dataset.k === it.a) x.classList.add("right"); });
+    if (!good) b.classList.add("wrong");
+    const last = dr.n === dr.items.length - 1;
+    $("drFb").innerHTML = `<div class="fb ${good ? "good" : "no"}"><b>${good ? "✅ Yes!" : "❌ Not quite."}</b> ${it.w}</div>
+      <button class="big" type="button" id="drNext" style="margin-top:12px">${last ? "See my score" : "Next →"}</button>`;
+    $("drNext").onclick = () => { dr.done = false; dr.n++; last ? showDrillEnd() : showDrillQ(); };
+  };
+}
+function showDrillEnd(){
+  const n = dr.items.length, ok = dr.ok;
+  state.best[dr.i] = Math.min(3, Math.max(state.best[dr.i] || 0, ok));
+  const msg = ok === n ? "Perfect! 🔥" : ok === n-1 ? "So close! 💪" : "Keep training. You'll get it 💪";
+  $("drStep").textContent = label(dr.i);
+  $("drView").innerHTML = `<div class="end"><div class="st">${"★".repeat(ok)}${"☆".repeat(n-ok)}</div>
+      <p class="ask">${ok} out of ${n}. ${msg}</p>${ok ? `<span class="saved"><span class="xpgain">+${ok*5} XP</span></span>` : ""}
+      <p class="sub" style="margin-top:12px">${REASONS[dr.i].short}</p></div>
+    <button class="big" type="button" id="drAgain">🔁 Play again</button>
+    <button class="link" type="button" id="drDone">Done</button>`;
+  if (ok) addXP(ok*5); else save();
+  if (ok === n) confetti();
+  renderGames();
+  $("drAgain").onclick = () => openDrill(dr.i);
+  $("drDone").onclick = () => $("drill").close();
+}
+$("drClose").onclick = () => $("drill").close();
+document.addEventListener("click", e => { const b = e.target.closest("[data-train]"); if (b) openDrill(+b.dataset.train); });
+
+/* ---------- quick mode ---------- */
+$("quickToggle").onclick = () => {
+  const q = $("quick"); q.hidden = !q.hidden;
+  $("quickToggle").setAttribute("aria-expanded", String(!q.hidden));
+  $("quickToggle").textContent = q.hidden ? "I already know why (quick mode)" : "Hide quick mode";
+};
+$("reasons").addEventListener("click", e => {
+  const b = e.target.closest(".reason"); if (!b) return;
+  const i = +b.dataset.i;
+  addMistake({r:i}); addXP(5);
+  const nb = $("reasons").querySelector(`[data-i="${i}"]`);
+  nb.classList.add("flash"); setTimeout(()=>nb.classList.remove("flash"), 350);
+  toast(`Saved: ${label(i)} (+5 XP)`, () => { state.mistakes.pop(); state.xp = Math.max(0, state.xp-5); save(); renderAll(); });
+});
+
+/* ---------- render ---------- */
+function renderReasons(){
+  const c = counts(state.mistakes);
+  $("reasons").innerHTML = REASONS.map((r,i)=>
+    `<button class="reason" type="button" data-i="${i}">${c[i] ? `<i>${c[i]}</i>` : ""}<b>${r.e} ${r.name}</b><span>${r.hint}</span></button>`).join("");
+  const n = state.mistakes.length;
+  $("count").textContent = n ? `${n} wrong answer${n>1?"s":""} saved` : "";
+}
+function renderTop(){
+  const order = topOrder().slice(0,3);
+  $("topSub").textContent = state.mistakes.length > RECENT
+    ? `From your last ${RECENT} wrong answers. #1 is your boss.` : "#1 is your boss. Beat it first.";
+  if (!order.length){ $("top").innerHTML = `<div class="empty">Check your wrong answers above. Your top mistakes will show here.</div>`; return; }
+  $("top").innerHTML = order.map(([n,i],k)=> k === 0 ? `
+    <div class="tm first">
+      <div class="row"><span class="rank">👾 Boss mistake</span><span class="times">${n} time${n>1?"s":""}</span></div>
+      <div class="name">${label(i)}</div>
+      ${fixHTML(i, true)}
+      <button class="train" type="button" data-train="${i}">🎮 Beat it: play the game (30 sec)</button>
+    </div>` : `
+    <div class="tm">
+      <div class="row"><span class="rank">#${k+1}</span><span class="times">${n} time${n>1?"s":""}</span></div>
+      <div class="name">${label(i)}</div>
+      <p class="short">${REASONS[i].short}</p>
+      <details class="more"><summary>How to fix it</summary>${fixHTML(i)}</details>
+      <button class="train sm" type="button" data-train="${i}">🎮 Play</button>
+    </div>`).join("");
+}
+function renderGames(){
+  const boss = (topOrder()[0] || [])[1];
+  $("games").innerHTML = REASONS.map((r,i)=>{ const b = Math.min(3, state.best[i] || 0);
+    return `<button class="game ${i === boss ? "boss" : ""}" type="button" data-train="${i}">${i === boss ? `<span class="tag2">👾 Boss</span>` : ""}<span class="ge">${r.e}</span><b>${r.name}</b><span class="stars">${"★".repeat(b)}${"☆".repeat(3-b)}</span></button>`; }).join("");
+}
+// Part of the test from the question number
+// Passage from the question number (most tests: 1-13, 14-26, 27-40)
+const PART = { label:"Passage", count:3, of:q => q <= 13 ? 1 : q <= 26 ? 2 : 3,
+  tip:{3:"Most of your mistakes are in Passage 3, the hardest one. That usually means vocabulary and reading speed: read more articles on academic topics."} };
+function renderWhere(){
+  const list = state.mistakes.slice(-RECENT);
+  const withQ = list.filter(m => m.q), withK = list.filter(m => m.k && KINDS[m.k]);
+  $("whereCard").hidden = withQ.length < 3 && withK.length < 3;
+  if ($("whereCard").hidden) return;
+  const rows = (pairs) => { const max = Math.max(...pairs.map(x=>x[1]), 1), top = Math.max(...pairs.map(x=>x[1]));
+    return pairs.map(([lab,n]) => `<div class="wrow ${n && n===top ? "worst" : ""}"><span>${lab}</span><span class="bar"><i style="width:${Math.round(n/max*100)}%"></i></span><b>${n}</b></div>`).join(""); };
+  let html = "";
+  if (withQ.length >= 3){
+    const c = Array(PART.count).fill(0); withQ.forEach(m => c[PART.of(m.q)-1]++);
+    html += `<div class="wgroup"><h3>By ${PART.label.toLowerCase()}</h3>${rows(c.map((n,i)=>[`${PART.label} ${i+1}`, n]))}</div>`;
+    const worst = c.indexOf(Math.max(...c)) + 1;
+    if (PART.tip[worst] && c[worst-1] >= 2) html += `<p class="wtip">${PART.tip[worst]}</p>`;
+  }
+  if (withK.length >= 3){
+    const ks = Object.keys(KINDS), c = ks.map(k => withK.filter(m => m.k === k).length);
+    html += `<div class="wgroup" style="margin-top:12px"><h3>By question type</h3>${rows(ks.map((k,i)=>[KINDS[k].short, c[i]]))}</div>`;
+  }
+  $("where").innerHTML = html;
+}
+let showAll = false;
+function renderHist(){
+  const list = state.mistakes.map((m,i)=>({m,i})).reverse();
+  $("histCard").hidden = !list.length;
+  const shown = showAll ? list : list.slice(0,8);
+  $("hist").innerHTML = shown.map(({m,i})=>{
+    const d = new Date(m.d).toLocaleDateString(undefined,{day:"numeric",month:"short"});
+    const what = m.right !== undefined
+      ? (m.mine ? `<s>${esc(m.mine)}</s> → ${esc(m.right)}` : `(empty) → ${esc(m.right)}`)
+      : `<span style="color:var(--mute)">quick mode</span>`;
+    return `<li><span class="q">${m.q ? "Q"+m.q : "·"}</span><span class="what">${what}<br><span class="tag">${label(m.r)}</span> <span style="color:var(--mute);font-size:13px">${d}</span></span><button class="x" type="button" data-i="${i}" aria-label="Delete">×</button></li>`;
+  }).join("");
+  $("moreBtn").hidden = list.length <= 8;
+  $("moreBtn").textContent = showAll ? "Show less" : `Show all (${list.length})`;
+}
+$("moreBtn").onclick = () => { showAll = !showAll; renderHist(); };
+$("hist").addEventListener("click", e => {
+  const b = e.target.closest(".x"); if (!b) return;
+  const i = +b.dataset.i, removed = state.mistakes.splice(i,1)[0]; save(); renderAll();
+  toast("Deleted", () => { state.mistakes.splice(i,0,removed); save(); renderAll(); });
+});
+function renderScores(){
+  const s = state.scores;
+  $("scores").innerHTML = s.map((x,i)=>({x,i})).reverse().map(({x,i})=>{
+    const d = new Date(x.d).toLocaleDateString(undefined,{day:"numeric",month:"short"});
+    return `<li><span>${d}</span><span><b>${x.s}</b>/40 · band ${band(x.s, x.m)}</span><button class="x" type="button" data-i="${i}" aria-label="Delete this score">×</button></li>`;
+  }).join("");
+  const last = s.slice(-10);
+  if (last.length < 2){ $("chart").innerHTML = ""; return; }
+  const W = 320, H = 120, pad = 18, bw = (W - pad) / last.length;
+  const y = v => H - 16 - (v/40)*(H - 30);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Your last scores">`;
+  [10,20,30,40].forEach(v => svg += `<line x1="${pad}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="0" y="${y(v)+4}" font-size="10" fill="var(--mute)">${v}</text>`);
+  last.forEach((x,i)=>{
+    const X = pad + i*bw + bw*0.18, w = bw*0.64, top = y(x.s), isLast = i === last.length-1;
+    svg += `<rect x="${X}" y="${top}" width="${w}" height="${H-16-top}" rx="3" fill="${isLast?'var(--accent)':'var(--navy)'}" opacity="${isLast?1:.55}"/>`;
+    svg += `<text x="${X+w/2}" y="${top-4}" font-size="10" text-anchor="middle" fill="var(--fg)">${x.s}</text>`;
+  });
+  $("chart").innerHTML = svg + `</svg>`;
+}
+$("scores").addEventListener("click", e => {
+  const b = e.target.closest(".x"); if (!b) return;
+  const i = +b.dataset.i, removed = state.scores.splice(i,1)[0]; save(); renderAll();
+  toast("Score deleted", () => { state.scores.splice(i,0,removed); save(); renderAll(); });
+});
+$("scoreForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const v = Number($("scoreIn").value);
+  if ($("scoreIn").value === "" || !Number.isInteger(v) || v < 0 || v > 40){
+    $("bandNow").textContent = "Please type a whole number from 0 to 40."; return;
+  }
+  const prev = state.scores.length ? state.scores[state.scores.length-1].s : null;
+  state.scores.push({s:v, m:state.module, d:Date.now()}); save(); $("scoreIn").value = ""; $("scoreIn").blur();
+  renderAll(); addXP(10);
+  $("bandNow").innerHTML = `${v}/40 = band <b>${band(v)}</b>${prev !== null && v > prev ? ` · 📈 +${v-prev} since last time!` : ""}`;
+  if (prev !== null && v > prev) confetti();
+});
+
+/* ---------- backup / restore / reset ---------- */
+$("backupBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(state)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `listening-mistakes-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  toast("Backup saved. Keep it for your new phone.");
+};
+$("restoreBtn").onclick = () => $("restoreIn").click();
+$("restoreIn").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try{
+    const s = JSON.parse(await f.text());
+    if (!Array.isArray(s.mistakes) || !Array.isArray(s.scores)) throw 0;
+    const before = JSON.stringify(state);
+    state = Object.assign(blank(), {seenWelcome:true}, s); save(); renderAll();
+    toast("Backup loaded", () => { state = JSON.parse(before); save(); renderAll(); });
+  }catch(_){ toast("That file is not a Mistake Log backup"); }
+  e.target.value = "";
+};
+let armTimer = null;
+$("resetBtn").onclick = () => {
+  const b = $("resetBtn");
+  if (!b.classList.contains("armed")){
+    b.classList.add("armed"); b.textContent = "Tap again to delete everything";
+    armTimer = setTimeout(()=>{ b.classList.remove("armed"); b.textContent = "Start again (delete everything)"; }, 4000);
+    return;
+  }
+  clearTimeout(armTimer);
+  const before = JSON.stringify(state);
+  state = Object.assign(blank(), {seenWelcome:true, module:state.module}); save(); renderAll();
+  b.classList.remove("armed"); b.textContent = "Start again (delete everything)";
+  toast("Everything deleted", () => { state = JSON.parse(before); save(); renderAll(); });
+};
+
+/* ---------- readable report to share ---------- */
+function reportText(){
+  const name = document.title;
+  const today = new Date().toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+  const order = topOrder().slice(0,3);
+  const L = [`My IELTS ${name} (${today})`, `Wrong answers checked: ${state.mistakes.length}`, `Level: ${LEVELS[lvl(state.xp)][1]} (${state.xp} XP)`];
+  if (order.length){ L.push("", "My top mistakes:"); order.forEach(([n,i],k)=>L.push(`${k+1}. ${REASONS[i].name}: ${n} time${n>1?"s":""}`)); }
+  if (state.scores.length){
+    const s = state.scores, last = s[s.length-1];
+    L.push("", `Scores: ${s.slice(-6).map(x=>x.s).join(", ")} (out of 40)`, `Latest: ${last.s}/40, about band ${band(last.s, last.m)}`);
+  }
+  const recent = state.mistakes.filter(m => m.right !== undefined).slice(-10).reverse();
+  if (recent.length){ L.push("", "Last wrong answers:"); recent.forEach(m => L.push(`${m.q ? "Q"+m.q+" " : ""}${m.mine || "(empty)"} → ${m.right}: ${REASONS[m.r].name}`)); }
+  L.push("", `Made with ${name}: ${location.href.split("#")[0]}`);
+  return L.join("\n");
+}
+$("shareBtn").onclick = async () => {
+  if (!state.mistakes.length && !state.scores.length){ toast("Nothing to send yet. Check a wrong answer first."); return; }
+  const text = reportText();
+  if (navigator.share){
+    try { await navigator.share({title: document.title, text}); return; }
+    catch(e){ if (e && e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(text); toast("Copied. Paste it into Telegram or a message."); }
+  catch(e){ toast("Couldn't copy. Please try again."); }
+};
+
+$("helpBtn").onclick = () => $("helpDlg").showModal();
+$("welcomeOk").onclick = () => { state.seenWelcome = true; save(); $("welcome").hidden = true; };
+// tap outside a dialog closes it
+document.querySelectorAll("dialog").forEach(d => d.addEventListener("click", e => { if (e.target === d) d.close(); }));
+
+function renderSeg(){ $("modSeg").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === state.module))); }
+$("modSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; state.module = b.dataset.m; save(); renderSeg(); };
+function renderAll(){ renderSeg(); renderReasons(); renderTop(); renderGames(); renderWhere(); renderHist(); renderScores(); renderStats(); $("bandNow").textContent = ""; }
+load();
+$("welcome").hidden = !!state.seenWelcome;
+renderAll();
+</script>
+</body>
+</html>
