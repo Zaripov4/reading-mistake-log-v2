@@ -171,6 +171,8 @@ dialog::backdrop{background:rgba(10,15,22,.6)}
 .dbody{padding:20px}
 .dtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .dtop .step{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+.dtop .step{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-right:10px}
+.dtop .close{flex:none}
 label{display:block;font-weight:700;margin:12px 0 6px}
 label small{font-weight:400;color:var(--mute)}
 .hint{color:var(--mute);font-size:14px;margin:-2px 0 8px}
@@ -351,6 +353,226 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 </dialog>
 
 <script>
+// ---------- question banks for the practice games ----------
+const two = (q, right, wrong, w, t) => ({t, q, o:[right, wrong], a:0, w});
+const TF3 = ["TRUE","FALSE","NOT GIVEN"], YN3 = ["YES","NO","NOT GIVEN"];
+const BANK = {};
+
+BANK.spell = [
+  ["The study found a sharp ___ in sales.","increase","increases",0,"a = one."],
+  ["Many ___ moved to the city.","family","families",1,"many = more than one."],
+  ["The ___ growth was slow.","economy","economic",1,"Before a noun (growth) you need an adjective."],
+  ["Bees play a key role in ___.","pollination","pollinate",0,"After “in” you need a noun."],
+  ["Several ___ were found in the cave.","tool","tools",1,"several = many."],
+  ["The results were ___ to the team.","surprise","surprising",1,"Describing the results → adjective."],
+  ["Farmers used ___ methods.","tradition","traditional",1,"Before a noun → adjective."],
+  ["The ___ of the city grew quickly.","population","populations",0,"One city has one population."],
+  ["Both ___ were published in 1990.","study","studies",1,"both = two."],
+  ["The project aimed to ___ pollution.","reduce","reduction",0,"After “to” → verb."],
+  ["There was a ___ of clean water.","shortage","short",0,"After “a” → noun."],
+  ["Each ___ was tested twice.","sample","samples",0,"each = one."],
+  ["The new law had a ___ effect.","positive","positively",0,"Before a noun → adjective, not adverb."],
+  ["Prices rose ___ in 2008.","sharply","sharp",0,"It describes how they rose (a verb) → adverb."],
+  ["A number of ___ were interviewed.","expert","experts",1,"a number of = many."],
+  ["The museum attracts thousands of ___ a year.","visitor","visitors",1,"thousands of = many."],
+  ["Scientists made an important ___.","discover","discovery",1,"After “an important” → noun."],
+  ["Rice is ___ in many parts of Asia.","grown","grow",0,"is + grown (passive)."],
+  ["The ___ was finally solved in 1953.","problem","problems",0,"was = one."],
+  ["Children learn languages more ___ than adults.","easy","easily",1,"It describes how they learn → adverb."],
+  ["The ___ of the bridge took ten years.","construction","construct",0,"After “the” → noun."],
+  ["Researchers collected ___ from 200 schools.","information","informations",0,"information never takes -s."],
+  ["The team gave useful ___ to farmers.","advice","advices",0,"advice never takes -s."]
+].map(([s,a,b,k,w]) => ({q:`“${s}”`, o:[a,b], a:k, w}));
+
+BANK.words = [
+  ["NO MORE THAN TWO WORDS","wooden boats","the wooden boats","“the” counts: 3 words."],
+  ["ONE WORD ONLY","rain","heavy rain","Two words."],
+  ["ONE WORD AND/OR A NUMBER","1850 farmers","about 1850 farmers","“about” makes it too long."],
+  ["NO MORE THAN THREE WORDS","small fishing village","a small fishing village","“a” counts: 4 words."],
+  ["NO MORE THAN TWO WORDS","solar power","the power of the sun","That's 5 words."],
+  ["ONE WORD ONLY","bacteria","harmful bacteria","Two words."],
+  ["NO MORE THAN TWO WORDS","climate change","changes in the climate","That's 4 words."],
+  ["ONE WORD ONLY","trade","trade routes","Two words."],
+  ["NO MORE THAN TWO WORDS","clay pots","pots made of clay","That's 4 words."],
+  ["NO MORE THAN THREE WORDS","rising sea levels","the rising sea levels","“the” counts: 4 words."],
+  ["ONE WORD ONLY","silk","Chinese silk","Two words."],
+  ["NO MORE THAN TWO WORDS","public transport","a public transport system","That's 4 words."],
+  ["ONE WORD AND/OR A NUMBER","3 years","over 3 years","“over” makes it too long."],
+  ["NO MORE THAN TWO WORDS","memory loss","the loss of memory","That's 4 words."],
+  ["ONE WORD ONLY","insects","small insects","Two words."],
+  ["NO MORE THAN THREE WORDS","wind and rain","strong wind and rain","That's 4 words."]
+].map(([lim,ok,bad,w]) => two(`${lim}. Which answer is OK?`, ok, bad, w)).concat(
+  [["red and yellow",3],["the wooden boats",3],["sea level",2],["a small fishing village",4],
+   ["climate change",2],["the Roman Empire",3],["fruit and vegetables",3]]
+  .map(([p,n]) => ({q:`How many words is “${p}”?`, o:[String(n-1),String(n),String(n+1)], a:1, keep:true, w:`${p.split(" ").join(" + ")} = ${n}. a, an, the and “and” count too.`})));
+
+// True / False / Not Given: one text, several statements
+const tf = (text, list, opts = TF3) => list.map(([s,a,w]) => ({t:text, q:`Statement: ${s}`, o:opts, a, keep:true, w}));
+BANK.ng = [].concat(
+  tf("Text: The bridge was opened in 1932.", [
+    ["The bridge opened in the 1930s.",0,"1932 is in the 1930s. Same meaning → TRUE."],
+    ["The bridge opened in 1925.",1,"The text gives a different year → FALSE."],
+    ["The bridge was expensive to build.",2,"The text says nothing about cost → NOT GIVEN."]]),
+  tf("Text: Only a few visitors came to the museum in winter.", [
+    ["The museum was busy in winter.",1,"“Only a few” is the opposite of busy → FALSE."],
+    ["Some people visited the museum in winter.",0,"A few visitors = some people → TRUE."],
+    ["The museum charges for entry.",2,"Nothing about money → NOT GIVEN."]]),
+  tf("Text: Tea was brought to Britain in the 1600s.", [
+    ["Tea arrived in Britain in the 17th century.",0,"The 1600s = the 17th century → TRUE."],
+    ["Tea arrived in Britain in the 1800s.",1,"Different time → FALSE."],
+    ["Tea is more popular than coffee in Britain.",2,"Maybe you know this, but the text doesn't say it → NOT GIVEN."]]),
+  tf("Text: The plant grows only in hot, dry places.", [
+    ["The plant can grow in cold places.",1,"“only in hot places” = not in cold places → FALSE."],
+    ["The plant needs warm conditions.",0,"hot = warm conditions → TRUE."],
+    ["The plant has yellow flowers.",2,"Nothing about flowers → NOT GIVEN."]]),
+  tf("Text: The library holds over two million books, but most of them are kept in storage.", [
+    ["The library has more than a million books.",0,"Two million is more than a million → TRUE."],
+    ["Most of the books are on open shelves.",1,"Most are in storage → FALSE."],
+    ["The library was built in the 19th century.",2,"No date is given → NOT GIVEN."]]),
+  tf("Text: The town's population doubled between 1990 and 2010, from 20,000 to 40,000.", [
+    ["By 2010, 40,000 people lived in the town.",0,"Same number → TRUE."],
+    ["The population fell between 1990 and 2010.",1,"It doubled, so it rose → FALSE."],
+    ["Most people moved to the town for work.",2,"No reason is given → NOT GIVEN."]]),
+  tf("Text: The first version of the game came out in 2004 and was free to play.", [
+    ["Players did not have to pay for the first version.",0,"free = no need to pay → TRUE."],
+    ["The first version cost $10.",1,"It was free → FALSE."],
+    ["The game was made in Japan.",2,"No country is mentioned → NOT GIVEN."]]),
+  tf("Text: Wolves usually hunt in groups, while foxes tend to hunt alone.", [
+    ["Foxes usually hunt by themselves.",0,"alone = by themselves → TRUE."],
+    ["Wolves normally hunt alone.",1,"Wolves hunt in groups → FALSE."],
+    ["Foxes are faster than wolves.",2,"Speed isn't mentioned → NOT GIVEN."]]),
+  tf("Text: The vaccine was tested on 3,000 volunteers before it was approved.", [
+    ["The vaccine was approved before it was tested.",1,"It was tested first → FALSE."],
+    ["Thousands of people took part in the tests.",0,"3,000 = thousands → TRUE."],
+    ["The volunteers were paid.",2,"Payment isn't mentioned → NOT GIVEN."]]),
+  tf("Text: Although the castle is popular with tourists, it is not the oldest building in the town.", [
+    ["The castle is the town's oldest building.",1,"The text says it is not → FALSE."],
+    ["Many tourists visit the castle.",0,"popular with tourists → TRUE."],
+    ["The castle is open every day.",2,"Opening days aren't mentioned → NOT GIVEN."]]),
+  tf("Text: Honey bees cannot see the colour red.", [
+    ["Bees are unable to see red.",0,"cannot = unable → TRUE."],
+    ["Bees can see all colours.",1,"They can't see red → FALSE."],
+    ["Bees can see ultraviolet light.",2,"This is true in real life, but the text doesn't say it → NOT GIVEN."]]),
+  tf("Text: Most birds can fly, but penguins and ostriches cannot.", [
+    ["All birds can fly.",1,"Penguins and ostriches can't → FALSE."],
+    ["Penguins are unable to fly.",0,"cannot = unable → TRUE."],
+    ["Ostriches can run faster than horses.",2,"Running isn't mentioned → NOT GIVEN."]]),
+  tf("The writer says: “In my view, the new rule is a mistake.”", [
+    ["The writer supports the new rule.",1,"The writer thinks it's a mistake → NO."],
+    ["The writer disagrees with the new rule.",0,"a mistake = disagrees → YES."],
+    ["The writer thinks the rule will be changed soon.",2,"The writer doesn't say this → NOT GIVEN."]], YN3),
+  tf("The writer says: “Many people believe homework is useless. I disagree: it helps children remember what they learn.”", [
+    ["The writer thinks homework is useless.",1,"That's other people's view. The writer disagrees → NO."],
+    ["The writer believes homework helps memory.",0,"helps children remember → YES."],
+    ["The writer thinks children get too much homework.",2,"The writer doesn't say how much → NOT GIVEN."]], YN3)
+);
+
+BANK.trap = [
+  ["Many people believe sugar makes children hyperactive, but research has found no link.","What did research find?","There is no link","Sugar makes children hyperactive","“but” turns it around."],
+  ["Although the town is famous for its fish market, most jobs are now in tourism.","Most jobs are in…","tourism","fishing","“Although” = the fish market is not the answer."],
+  ["The project was not cancelled. It was delayed until spring.","What happened to the project?","It was delayed","It was cancelled","The word “cancelled” is there, but with “not”."],
+  ["Unlike wolves, foxes usually hunt alone.","Foxes usually hunt…","alone","in groups","“Unlike wolves” = wolves hunt in groups, foxes don't."],
+  ["It was once thought that the Earth was flat, but this idea was rejected long ago.","Does the writer say the Earth is flat?","No","Yes","“was once thought… rejected” = not true."],
+  ["Contrary to popular belief, goldfish can remember things for months.","Goldfish memory is…","longer than people think","only a few seconds","“Contrary to popular belief” = the common idea is wrong."],
+  ["The new drug did not reduce pain more than the old one.","The new drug…","worked about the same","reduced pain more","“did not” flips it."],
+  ["Few people today remember that the city was once a major port.","Today, the city…","is not known as a port","is a major port","“was once” = in the past."],
+  ["While cars were once seen as a luxury, they are now an everyday item.","Today, cars are…","ordinary","a luxury","“were once” = no longer."],
+  ["The study did not find that video games make children violent.","The study found…","no proof that games cause violence","that games make children violent","“did not find”."],
+  ["Despite heavy rain, the harvest was better than expected.","The harvest was…","good","bad","“Despite” = the rain didn't ruin it."],
+  ["It is a myth that we only use 10% of our brains.","We use…","much more than 10% of our brains","only 10% of our brains","“a myth” = not true."],
+  ["Rather than building new roads, the city invested in buses.","The city spent money on…","buses","new roads","“Rather than” = not roads."],
+  ["Older people were not more likely to get sick than younger people.","Older people got sick…","about as often","more often","“not more likely”."],
+  ["The theory was popular in the 1950s but is now rejected by most scientists.","Most scientists today…","reject the theory","accept the theory","“but is now rejected”."],
+  ["Unlike most birds, penguins cannot fly.","Penguins…","can't fly","can fly","“Unlike most birds”."]
+].map(([t,q,r,w,why]) => two(q, r, w, why, `“${t}”`));
+
+BANK.diff = [
+  ["decrease","fall","rise"],["elderly people","senior citizens","teenagers"],["important","significant","minor"],
+  ["ancient","very old","modern"],["reduce costs","cut spending","spend more"],["cause","lead to","prevent"],
+  ["increase","grow","decline"],["rapid","fast","gradual"],["enough","sufficient","insufficient"],
+  ["many","numerous","few"],["first","initial","final"],["help","assist","hinder"],
+  ["show","demonstrate","hide"],["need","require","ignore"],["large","substantial","slight"],
+  ["often","frequently","rarely"],["start","launch","end"],["get","obtain","lose"],
+  ["build","construct","demolish"],["rich","wealthy","poor"],["worldwide","global","local"],
+  ["difficult","challenging","easy"],["buy","purchase","sell"],["children","young people","the elderly"],
+  ["illness","disease","cure"],["job","occupation","hobby"],["money for a project","funding","debt"],
+  ["mistake","error","success"],["prove","confirm","disprove"],["rule","regulation","freedom"],
+  ["old-fashioned","outdated","up-to-date"],["rise quickly","soar","drop"],["stop","halt","continue"],
+  ["change","alter","keep"],["surprising","unexpected","predictable"],["harmful","damaging","beneficial"],
+  ["city","urban area","countryside"],["about","approximately","exactly"],["main","primary","minor"],
+  ["copy","imitate","invent"]
+].map(([w,r,x]) => two(`The question says “${w}”. The text might say…`, r, x, `${w} = ${r}.`));
+
+BANK.place = [
+  two("To find the right place fast, look for…","names, numbers, Capital Letters","the longest words","They are easy to spot and rarely change."),
+  two("The Q5 answer was in paragraph C. Q6 (sentence completion) is probably…","in C or after it","in paragraph A","Sentence completion follows the order of the text."),
+  two("Matching headings: what do you do first?","Read the paragraph and sum it up","Read all the headings first","Know the main idea first, then look at the headings."),
+  two("“Which paragraph contains…” (matching information) answers are…","in any order","always in order","Matching information can be anywhere."),
+  two("A heading uses the same word as one sentence in the paragraph. It's…","maybe a trap: check the main idea","surely right","A heading is about the whole paragraph, not one word."),
+  two("Short-answer questions usually follow…","the order of the text","no order","Short answers follow the text order."),
+  two("TRUE / FALSE / NOT GIVEN answers come…","in the order of the text","in a random order","They follow the text order."),
+  two("Matching features (e.g. which researcher said what) answers are…","in any order","always in order","The names can appear anywhere."),
+  two("The question says “In 1987…”. How do you find the place?","Scan the text for “1987”","Read every word from the start","Numbers are quick to find."),
+  two("You found the place. What next?","Read the sentences around it carefully","Write the first word you see","The answer is close by, but check the meaning."),
+  two("Summary completion: where's the answer?","often in one part of the text, but not always in order","always in the first paragraph","Find the part the summary is about first."),
+  two("One heading seems to fit two paragraphs. What do you do?","Read both again and choose the best fit","Use it for both","Each heading is usually used only once.")
+];
+
+BANK.time = [
+  two("You've been stuck on one question for 3 minutes. What do you do?","Skip it, come back later","Keep trying","One question = one mark. Don't lose five for it."),
+  two("Is there extra time to copy answers onto the answer sheet?","No, write as you go","Yes, 10 minutes","In Reading there's no extra time. (Paper Listening has it, Reading doesn't.)"),
+  two("Time is almost up and Q40 is empty. What do you do?","Guess","Leave it empty","You don't lose marks for wrong answers."),
+  two("Which passage usually needs the most time?","Passage 3","Passage 1","Passage 3 is the hardest."),
+  two("You often run out of time. The best long-term fix is…","more vocabulary and practice","reading fast without understanding","Knowing more words makes you faster."),
+  two("How long is the Reading test?","60 minutes","90 minutes","60 minutes for 3 passages and 40 questions."),
+  two("In Academic Reading, how many passages are there?","3","4","3 long passages. (General Training has 3 sections with shorter texts.)"),
+  two("One question type always takes you too long. Best fix?","Practise that type on its own","Always skip it in the exam","Practise it until it gets quicker."),
+  two("You finished Passage 1 in 15 minutes. The extra time goes to…","Passage 3","a break","Passage 3 needs it most."),
+  two("About how long should each passage take?","about 20 minutes","about 40 minutes","3 passages in 60 minutes.")
+];
+
+BANK.new = [
+  ["The drought lasted two years. No rain fell at all.","drought","a long time with no rain","a big flood"],
+  ["Wolves are predators: they hunt and eat other animals.","predators","animals that hunt others","animals that are hunted"],
+  ["The results were inconclusive, so more research is needed.","inconclusive","not clear yet","very clear"],
+  ["The city is densely populated, with millions living close together.","densely populated","lots of people in a small area","almost empty"],
+  ["The species is nocturnal: it sleeps by day and hunts at night.","nocturnal","active at night","active by day"],
+  ["The old bridge is obsolete. No one has used it since the new one opened.","obsolete","no longer used","brand new"],
+  ["The disease is contagious, so patients are kept apart.","contagious","spreads between people","not dangerous"],
+  ["Rainfall in the region is sparse. It rains only a few days a year.","sparse","small in amount","heavy"],
+  ["The tribe was nomadic, moving from place to place with their animals.","nomadic","moving around","staying in one place"],
+  ["The decision was unanimous: every expert agreed.","unanimous","everyone agreeing","everyone disagreeing"],
+  ["The land is fertile, so crops grow well.","fertile","good for growing plants","dry and empty"],
+  ["Plastic is durable; it can last hundreds of years.","durable","long-lasting","easily broken"],
+  ["The volcano is dormant. It has not erupted for 500 years.","dormant","inactive for now","erupting often"],
+  ["The ice is melting at an unprecedented rate, faster than ever recorded.","unprecedented","never seen before","normal"],
+  ["The idea was controversial: many people strongly disagreed.","controversial","causing disagreement","accepted by all"],
+  ["The town relied on fishing; without it, there would be no jobs.","relied on","depended on","ignored"],
+  ["The two languages are distinct. Speakers cannot understand each other.","distinct","clearly different","the same"],
+  ["Bees are vital for farming. Without them, many crops would fail.","vital","very important","harmful"],
+  ["The data were insufficient, so no conclusion was reached.","insufficient","not enough","too much"],
+  ["The rapid growth of the city surprised everyone. It doubled in five years.","rapid","fast","slow"],
+  ["The custom is widespread. You'll find it across the whole country.","widespread","found in many places","rare"],
+  ["The coins were scarce, so they became very valuable.","scarce","hard to find","common"]
+].map(([t,w,r,x]) => two(`${w} = ?`, r, x, "The words around it give you the meaning.", `“${t}”`))
+ .concat([two("Do you need to know every word in a passage?","No, often you can skip it","Yes, always","Only the words the question needs matter.")]);
+
+BANK.ques = [
+  {q:"“Which TWO advantages are mentioned?” How many letters do you write?", o:["1","2","3"], a:1, keep:true, w:"TWO = two letters."},
+  {q:"“Choose THREE letters.” How many answers?", o:["1","2","3"], a:2, keep:true, w:"THREE = three letters."},
+  two("“Which of these is NOT mentioned?” You look for…","the one that's missing from the text","the one in the text","NOT turns the question around."),
+  {t:"Text: Bees live in most parts of the world.", q:"Statement: Bees ONLY live in hot countries.", o:TF3, a:1, keep:true, w:"“only” makes it false. Bees live almost everywhere."},
+  two("“Choose ONE WORD ONLY from the passage.” Can you change the word's form?","No, copy it exactly","Yes, if it fits better","“from the passage” = copy it exactly."),
+  two("“According to the writer…” Whose view counts?","the writer's","the scientists' in the text","Only the writer's opinion counts here."),
+  two("“The writer's MAIN purpose is…” You look for…","the idea of the whole text","one detail in paragraph B","MAIN = the big picture."),
+  two("“NO MORE THAN TWO WORDS AND/OR A NUMBER.” Is “3 small boats” OK?","Yes","No","Two words + a number is allowed."),
+  two("“Which TWO are mentioned?” You choose A, C and D.","Wrong: only two letters","OK, more is safer","Too many letters = no mark."),
+  two("“Complete with words from the text.” You use your own word with the same meaning.","Wrong: use the text's word","OK, same meaning","Copy the words from the text."),
+  two("The question asks WHEN the city was founded. You need…","a time or date","a place","WHEN = time."),
+  two("The question asks WHY birds migrate. You need…","a reason","a place","WHY = a reason."),
+  two("The question asks for the writer's opinion. Other people's views in the text…","don't count","count the same","Only the writer's view matters.")
+];
+
 const TFNG_PIC = `<div class="node">📝 Read the statement</div>
   <div class="dn">↓</div>
   <div class="node">🔍 Find the same place in the text</div>
@@ -362,7 +584,6 @@ const TFNG_PIC = `<div class="node">📝 Read the statement</div>
   </div>
   <div class="vrow" style="margin-top:10px"><span class="ch">some ≠ all</span><span class="ch">often ≠ always</span><span class="ch">claims ≠ proves</span></div>
   <div class="cap">Small words change the answer</div>`;
-const TF3 = ["TRUE","FALSE","NOT GIVEN"], YN3 = ["YES","NO","NOT GIVEN"];
 const REASONS = [
   {e:"✍️", name:"Spelling or -s", hint:"Right word, written wrong",
    why:"You found the right word, but the spelling or the -s was wrong.",
@@ -372,12 +593,7 @@ const REASONS = [
         <div class="cap">One or many? · Does the word fit the sentence?</div>`,
    steps:["👆 Copy the word letter by letter","🔢 One or many? Check the -s","🧩 Does the word form fit the gap?"],
    more:"Check the right form of the word (economy or economic?). Keep a notebook of words you misspell.",
-   drill:[
-    {q:"“The study found a sharp ___ in sales.”", o:["increase","increases"], a:0, w:"a = one → increase."},
-    {q:"“Many ___ moved to the city.”", o:["family","families"], a:1, w:"many = more than one → families."},
-    {q:"“The ___ growth was slow.”", o:["economy","economic"], a:1, w:"Before a noun (growth) you need an adjective → economic."},
-    {q:"“Bees play a key role in ___.”", o:["pollination","pollinate"], a:0, w:"After “in” you need a noun → pollination."},
-    {q:"“Several ___ were found in the cave.”", o:["tool","tools"], a:1, w:"several = many → tools."}]},
+   drill:BANK.spell},
   {e:"📏", name:"Too many words", hint:"Broke the word limit",
    why:"You wrote more words than the question allows.",
    short:"Count every word. a, an and the count too.",
@@ -386,27 +602,14 @@ const REASONS = [
         <div class="vrow"><span class="ch">red and yellow = 3 words</span></div>`,
    steps:["⭕ Circle the word limit first","🔢 Count: a, an, the, and all count","📋 “From the text” = copy, don't change"],
    more:"A number counts as one word. If it says 'from the text', use the words from the text.",
-   drill:[
-    {q:"NO MORE THAN TWO WORDS. Which is OK?", o:["the wooden boats","wooden boats"], a:1, w:"“the” counts. “the wooden boats” is three words."},
-    {q:"ONE WORD ONLY. Which is OK?", o:["rain","heavy rain"], a:0, w:"“heavy rain” is two words."},
-    {q:"How many words is “red and yellow”?", o:["2","3"], a:1, w:"“and” counts: red + and + yellow = 3."},
-    {q:"ONE WORD AND/OR A NUMBER. Is “1850 farmers” OK?", o:["Yes ✅","No ❌"], a:0, keep:true, w:"One number + one word is allowed."},
-    {q:"NO MORE THAN THREE WORDS. Which is OK?", o:["a small fishing village","small fishing village"], a:1, w:"“a” counts, so the first one is four words."}]},
+   drill:BANK.words},
   {e:"🤷", name:"Not Given mix-up", hint:"True, False or Not Given confusion",
    why:"You mixed up Not Given with True or False.",
    short:"FALSE = the text says the opposite. NOT GIVEN = the text says nothing.",
    pic:TFNG_PIC,
    steps:["🔍 Find the place in the text","🔤 Watch small words: only, some, always, claims","🚫 Never use what you already know"],
    more:"Same words don't make it True: check the meaning. Watch words like some, mainly, always and claimed, suggests, believes. In Yes/No/Not Given, only the writer's opinion counts, not other people's.",
-   drill:[
-    {t:"Text: The bridge was opened in 1932.", q:"Statement: The bridge opened in the 1930s.", o:TF3, a:0, keep:true, w:"1932 is in the 1930s. Same meaning → TRUE."},
-    {t:"Text: The bridge was opened in 1932.", q:"Statement: The bridge opened in 1925.", o:TF3, a:1, keep:true, w:"The text gives a different year. Opposite → FALSE."},
-    {t:"Text: The bridge was opened in 1932.", q:"Statement: The bridge was expensive to build.", o:TF3, a:2, keep:true, w:"The text says nothing about cost → NOT GIVEN."},
-    {t:"Text: Only a few visitors came to the museum in winter.", q:"Statement: The museum was busy in winter.", o:TF3, a:1, keep:true, w:"“Only a few” is the opposite of busy → FALSE."},
-    {t:"Text: Tea was brought to Britain in the 1600s.", q:"Statement: Tea is more popular than coffee in Britain.", o:TF3, a:2, keep:true, w:"Maybe you know this, but the text doesn't say it → NOT GIVEN."},
-    {t:"Text: The plant grows only in hot, dry places.", q:"Statement: The plant can grow in cold places.", o:TF3, a:1, keep:true, w:"“only in hot places” = not in cold places → FALSE."},
-    {t:"Text: The library holds over two million books.", q:"Statement: The library has more than a million books.", o:TF3, a:0, keep:true, w:"Two million is more than a million → TRUE."},
-    {t:"The writer says: “In my view, the new rule is a mistake.”", q:"Statement: The writer supports the new rule.", o:YN3, a:1, keep:true, w:"The writer thinks it's a mistake. Opposite view → NO."}]},
+   drill:BANK.ng},
   {e:"🪤", name:"Keyword trap", hint:"Picked it because the words matched",
    why:"You picked the answer because it used the same words as the text, but the meaning was different.",
    short:"Same words ≠ same meaning.",
@@ -417,12 +620,7 @@ const REASONS = [
         <div class="cap">The trap copies the words. The answer copies the meaning.</div>`,
    steps:["📖 Read the whole sentence, not just the matching word","⚠️ Watch: but, however, although, not"],
    more:"In a word list, an option copied straight from the text is often a trap.",
-   drill:[
-    {t:"“Many people believe sugar makes children hyperactive, but research has found no link.”", q:"What did research find?", o:["Sugar makes children hyperactive","There is no link"], a:1, w:"“but” turns it around. Research found no link."},
-    {t:"“Although the town is famous for its fish market, most jobs are now in tourism.”", q:"Most jobs are in…", o:["fishing","tourism"], a:1, w:"“Although” = the fish market is not the answer."},
-    {t:"“The project was not cancelled. It was delayed until spring.”", q:"What happened to the project?", o:["It was cancelled","It was delayed"], a:1, w:"The word “cancelled” is there, but with “not”."},
-    {t:"“Unlike wolves, foxes usually hunt alone.”", q:"Foxes usually hunt…", o:["in groups","alone"], a:1, w:"“Unlike wolves” = wolves hunt in groups, foxes don't."},
-    {t:"“It was once thought that the Earth was flat, but this idea was rejected long ago.”", q:"The writer says the Earth is flat.", o:["Yes","No"], a:1, keep:true, w:"“was once thought… but rejected” = not the writer's view."}]},
+   drill:BANK.trap},
   {e:"🔁", name:"Different words", hint:"The text said it in other words",
    why:"The text said the answer with different words from the question, so you didn't notice it.",
    short:"The text says it with other words.",
@@ -432,13 +630,7 @@ const REASONS = [
         <div class="cap">❓ = question · 📖 = text</div>`,
    steps:["✏️ Underline 2 key words in the question","💭 Think of other ways to say them","📋 After the test, list the pairs"],
    more:"Write each pair (question word → text word) in a list and review it.",
-   drill:[
-    {q:"The question says “decrease”. The text might say…", o:["fall","rise"], a:0, w:"decrease = fall."},
-    {q:"The question says “elderly people”. The text might say…", o:["senior citizens","teenagers"], a:0, w:"elderly = old = senior."},
-    {q:"The question says “important”. The text might say…", o:["significant","minor"], a:0, w:"significant = important. minor = small."},
-    {q:"The question says “ancient”. The text might say…", o:["very old","modern"], a:0, w:"ancient = very old."},
-    {q:"The question says “reduce costs”. The text might say…", o:["cut spending","spend more"], a:0, w:"reduce = cut, costs = spending."},
-    {q:"The question says “cause”. The text might say…", o:["lead to","prevent"], a:0, w:"X causes Y = X leads to Y."}]},
+   drill:BANK.diff},
   {e:"📍", name:"Wrong part of the text", hint:"Looked in the wrong place",
    why:"You took the answer from the wrong part of the text, or couldn't find the right part.",
    short:"Find the place first, then answer.",
@@ -449,12 +641,7 @@ const REASONS = [
         <div class="vrow" style="margin-top:10px"><span class="ch">📰 Headings:</span><span class="ch">read the paragraph</span><span class="ar">→</span><span class="ch">sum it up in 1–2 words</span><span class="ar">→</span><span class="ch ok">match</span></div>`,
    steps:["🔎 Use names, numbers and Capital Letters to find the place","➡️ Many types follow the text order","📰 Headings: read the paragraph first, not the headings"],
    more:"Multiple choice, sentence completion and short answers follow the order of the text. Matching, summary and table answers can be anywhere. For headings, underline the key words in the headings, match the easy ones first, and for the hard ones write 2–3 possible headings and read again.",
-   drill:[
-    {q:"To find the right place fast, look for…", o:["names, numbers, Capital Letters","the longest words"], a:0, w:"They are easy to spot and rarely change."},
-    {q:"The Q5 answer was in paragraph C. Q6 (sentence completion) is probably…", o:["in C or after it","in paragraph A"], a:0, w:"Sentence completion follows the order of the text."},
-    {q:"Matching headings: what do you do first?", o:["Read the paragraph and sum it up","Read all the headings first"], a:0, w:"Know the main idea first, then look at the headings."},
-    {q:"“Which paragraph contains…” (matching information) answers are…", o:["in any order","always in order"], a:0, w:"Matching information can be anywhere."},
-    {q:"A heading uses the same word as one sentence in the paragraph. It's…", o:["maybe a trap: check the main idea","surely right"], a:0, w:"A heading is about the whole paragraph, not one word."}]},
+   drill:BANK.place},
   {e:"⏱️", name:"Ran out of time", hint:"Guessed or didn't reach it",
    why:"You guessed or didn't reach this question because time ran out.",
    short:"About 20 minutes per passage. Passage 3 needs the most.",
@@ -462,12 +649,7 @@ const REASONS = [
         <div class="cap">60 minutes · no extra time to copy answers</div>`,
    steps:["⏭️ Stuck? Skip it, come back later","✍️ Write answers on the sheet as you go","🎯 Never leave an answer empty"],
    more:"If you often run out of time, the real fix is usually more vocabulary and practice with each question type, not a faster clock.",
-   drill:[
-    {q:"You've been stuck on one question for 3 minutes. What do you do?", o:["Skip it, come back later","Keep trying"], a:0, w:"One question = one mark. Don't lose five for it."},
-    {q:"Is there extra time to copy answers onto the answer sheet?", o:["Yes, 10 minutes","No, write as you go"], a:1, w:"In Reading there's no extra time. Listening on paper has it, Reading doesn't."},
-    {q:"Time is almost up and Q40 is empty. What do you do?", o:["Leave it empty","Guess"], a:1, w:"You don't lose marks for wrong answers."},
-    {q:"Which passage usually needs the most time?", o:["Passage 1","Passage 3"], a:1, w:"Passage 3 is the hardest."},
-    {q:"You often run out of time. The best long-term fix is…", o:["more vocabulary and practice","reading faster without understanding"], a:0, w:"Knowing more words makes you faster naturally."}]},
+   drill:BANK.time},
   {e:"📚", name:"New word", hint:"I didn't know a key word",
    why:"A key word in the text or question was new to you.",
    short:"First ask: do I even need this word?",
@@ -477,12 +659,7 @@ const REASONS = [
         <div class="cap">The words around it give the meaning</div>`,
    steps:["🤔 Do I need this word to answer? Often no","🔍 If yes, guess from the words around it","📖 Read in English 10–15 min a day"],
    more:"Keep a notebook with the meaning and the sentence you found it in, and review it every week.",
-   drill:[
-    {t:"“The drought lasted two years. No rain fell at all.”", q:"drought = ?", o:["a long time with no rain","a big flood"], a:0, w:"“No rain fell” gives the meaning."},
-    {t:"“Wolves are predators: they hunt and eat other animals.”", q:"predators = ?", o:["animals that hunt others","animals that are hunted"], a:0, w:"“they hunt and eat other animals”."},
-    {t:"“The results were inconclusive, so more research is needed.”", q:"inconclusive = ?", o:["not clear yet","very clear"], a:0, w:"“more research is needed” = no clear answer yet."},
-    {t:"“The city is densely populated, with millions living close together.”", q:"densely populated = ?", o:["lots of people in a small area","almost empty"], a:0, w:"“millions living close together”."},
-    {q:"Do you need to know every word in a passage?", o:["No, often you can skip it","Yes, always"], a:0, w:"Only words that the question needs matter."}]},
+   drill:BANK.new},
   {e:"🔎", name:"Read the question wrong", hint:"Missed NOT, only, all…",
    why:"You missed a small but important word in the question.",
    short:"Circle the small words: NOT, only, all, TWO.",
@@ -492,12 +669,7 @@ const REASONS = [
         <div class="cap">One small word changes the whole answer</div>`,
    steps:["⭕ Circle: NOT, only, all, always, never, TWO","👀 Read the question twice"],
    more:"Also watch for some, most, and questions that ask for the writer's opinion.",
-   drill:[
-    {q:"“Which TWO advantages are mentioned?” How many letters do you write?", o:["1","2"], a:1, keep:true, w:"TWO = two letters."},
-    {q:"“Which of these is NOT mentioned?” You look for…", o:["the one that's missing from the text","the one in the text"], a:0, w:"NOT turns the question around."},
-    {t:"Text: Bees live in most parts of the world.", q:"Statement: Bees ONLY live in hot countries.", o:TF3, a:1, keep:true, w:"“only” makes it false. Bees live almost everywhere."},
-    {q:"“Choose ONE WORD ONLY from the passage.” Can you change the word's form?", o:["No, copy it exactly","Yes, if it fits better"], a:0, w:"“from the passage” = copy it exactly."},
-    {q:"“According to the writer…” Whose view counts?", o:["the writer's","the scientists' in the text"], a:0, w:"Only the writer's opinion counts here."}]}
+   drill:BANK.ques}
 ];
 const R = {SPELL:0, WORDS:1, NG:2, TRAP:3, DIFF:4, PLACE:5, TIME:6, NEW:7, QUES:8};
 const BANDS = {
@@ -586,7 +758,7 @@ const KINDS = {
 };
 
 /* ---------- state ---------- */
-const blank = () => ({mistakes:[], scores:[], seenWelcome:false, xp:0, days:[], best:{}, module:"a"});
+const blank = () => ({mistakes:[], scores:[], seenWelcome:false, xp:0, days:[], best:{}, seen:{}, module:"a"});
 let state = blank();
 function load(){
   try{
@@ -780,7 +952,17 @@ $("detClose").onclick = () => $("det").close();
 /* ---------- practice games ---------- */
 const shuffle = a => { for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
 let dr = {};
-function openDrill(i){ dr = {i, items: shuffle(REASONS[i].drill.slice()).slice(0,3), n:0, ok:0}; showDrillQ(); if (!$("drill").open) $("drill").showModal(); }
+// pick 3 questions the student hasn't seen yet; start over only when all are used
+function pickItems(i, n = 3){
+  const pool = REASONS[i].drill, all = pool.map((_,k)=>k);
+  let seen = (state.seen[i] || []).filter(k => k < pool.length);
+  let fresh = shuffle(all.filter(k => !seen.includes(k)));
+  if (fresh.length < n){ const rest = shuffle(all.filter(k => !fresh.includes(k))); fresh = fresh.concat(rest); seen = []; }
+  const pick = fresh.slice(0, n);
+  state.seen[i] = seen.concat(pick); save();
+  return pick.map(k => pool[k]);
+}
+function openDrill(i){ dr = {i, items: pickItems(i), n:0, ok:0}; showDrillQ(); if (!$("drill").open) $("drill").showModal(); }
 function showDrillQ(){
   const it = dr.items[dr.n], order = it.keep ? it.o.map((_,k)=>k) : shuffle(it.o.map((_,k)=>k));
   const three = it.o.length >= 3 || it.o.every(o => o.length <= 6);
