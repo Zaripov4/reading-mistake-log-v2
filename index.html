@@ -136,6 +136,7 @@ mark{background:var(--hl);color:inherit;border-radius:4px;padding:0 3px}
 .mtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:15px}
 .mnew{background:#F5B700;color:#16212E;font-weight:700;font-size:12px;border-radius:999px;padding:1px 8px;animation:pop .4s}
 .mbar .xpbar{display:block}
+.nudge{border:2px solid var(--accent)}
 .game.boss{border-color:var(--accent);background:var(--accent-soft)}
 .game .tag2{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
 
@@ -247,6 +248,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
   </header>
   <div class="stats" id="stats"></div>
 
+  <section class="card nudge" id="backupNudge" hidden>
+    <h2>💾 Save your progress</h2>
+    <p class="sub" id="nudgeText"></p>
+    <button class="big" type="button" id="nudgeSave">📤 Send a backup to myself</button>
+    <button class="link" type="button" id="nudgeLater">Later</button>
+  </section>
+
+  <section class="card nudge" id="installNudge" hidden>
+    <h2>📲 Add it to your home screen</h2>
+    <p class="sub" id="installText"></p>
+    <button class="big" type="button" id="installBtn" hidden>Add to home screen</button>
+    <button class="link" type="button" id="installLater">Not now</button>
+  </section>
+
   <section class="card welcome" id="welcome" hidden>
     <h2>Hi! 👋 Here's the plan</h2>
     <ol>
@@ -313,10 +328,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
     <h2>Share and save</h2>
     <p class="sub">Send your top mistakes and scores to a teacher, a parent or a friend.</p>
     <button class="big" type="button" id="shareBtn" style="background:var(--primary)">📤 Send my results</button>
-    <p class="sub" style="margin:18px 0 10px">Your data is saved only on this phone. <b>Changing phones?</b> Save a backup file here, then load it on the new phone. You don't need to open the file.</p>
+    <p class="sub" style="margin:18px 0 6px">Your progress is saved <b>only on this phone, in this browser</b>. To keep it safe, send a backup to yourself (Telegram's Saved Messages is easiest). New phone? Open the app there and tap <b>Load a backup</b>. You don't need to open the file.</p>
+    <p class="sub" id="lastBackup" style="margin:0 0 10px;font-weight:700"></p>
     <div class="tools">
-      <button class="tool" type="button" id="backupBtn">⬇︎ Save a backup file (for a new phone)</button>
-      <button class="tool" type="button" id="restoreBtn">⬆︎ Load a backup file (on the new phone)</button>
+      <button class="tool" type="button" id="backupBtn">📤 Send a backup to myself (Telegram, email…)</button>
+      <button class="tool" type="button" id="restoreBtn">⬆︎ Load a backup</button>
       <input type="file" id="restoreIn" accept=".json,application/json" hidden>
       <button class="tool danger" type="button" id="resetBtn">Start again (delete everything)</button>
     </div>
@@ -1172,26 +1188,73 @@ $("scoreForm").addEventListener("submit", e => {
 });
 
 /* ---------- backup / restore / reset ---------- */
-$("backupBtn").onclick = () => {
-  const blob = new Blob([JSON.stringify(state)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `listening-mistakes-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  toast("Backup saved. Keep it for your new phone.");
-};
+const APP = KEY[0] === "r" ? "reading" : "listening";
+async function doBackup(){
+  const name = `${APP}-mistake-log-backup-${new Date().toISOString().slice(0,10)}.json`;
+  const data = JSON.stringify(Object.assign({}, state, {app: APP}));
+  let shared = false;
+  // phones: open the share sheet so the file can go straight to Telegram, email, Drive…
+  for (const type of ["application/json", "text/plain"]){
+    try{
+      const f = new File([data], name, {type});
+      if (navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f], title:name}); shared = true; break; }
+    }catch(e){ if (e && e.name === "AbortError") return false; }
+  }
+  if (!shared){ // computers and older phones: download the file
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([data], {type:"application/json"})); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  state.backup = {t: Date.now(), m: state.mistakes.length, s: state.scores.length}; state.snooze = 0; save(); renderSafety();
+  toast(shared ? "Backup sent. Keep it safe! ✅" : "Backup saved in Downloads. Send it to yourself on Telegram to keep it safe.");
+  return true;
+}
+$("backupBtn").onclick = doBackup;
+$("nudgeSave").onclick = doBackup;
+$("nudgeLater").onclick = () => { state.snooze = Date.now() + 2*864e5; save(); renderSafety(); };
 $("restoreBtn").onclick = () => $("restoreIn").click();
 $("restoreIn").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try{
     const s = JSON.parse(await f.text());
     if (!Array.isArray(s.mistakes) || !Array.isArray(s.scores)) throw 0;
+    if (s.app && s.app !== APP){ toast(`This is a ${s.app[0].toUpperCase() + s.app.slice(1)} backup. Open the ${s.app[0].toUpperCase() + s.app.slice(1)} app to load it.`); e.target.value = ""; return; }
     const before = JSON.stringify(state);
-    state = Object.assign(blank(), {seenWelcome:true}, s); save(); renderAll();
-    toast("Backup loaded", () => { state = JSON.parse(before); save(); renderAll(); });
+    state = Object.assign(blank(), {seenWelcome:true}, s);
+    state.backup = {t: Date.now(), m: state.mistakes.length, s: state.scores.length};
+    save(); renderAll();
+    toast("Backup loaded ✅", () => { state = JSON.parse(before); save(); renderAll(); });
   }catch(_){ toast("That file is not a Mistake Log backup"); }
   e.target.value = "";
 };
+
+/* ---------- keeping data safe: backup reminder + add to home screen ---------- */
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isAndroid = /android/i.test(navigator.userAgent);
+let installEvt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; renderSafety(); });
+addEventListener("appinstalled", () => { installEvt = null; renderSafety(); });
+$("installBtn").onclick = async () => { if (!installEvt) return; installEvt.prompt(); try{ await installEvt.userChoice; }catch(_){} installEvt = null; renderSafety(); };
+$("installLater").onclick = () => { state.installSnooze = Date.now() + 7*864e5; save(); renderSafety(); };
+function renderSafety(){
+  const b = state.backup || {t:0, m:0, s:0};
+  const newM = Math.max(0, state.mistakes.length - b.m), newS = Math.max(0, state.scores.length - b.s);
+  const days = b.t ? Math.floor((Date.now() - b.t) / 864e5) : null;
+  $("lastBackup").textContent = b.t ? `Last backup: ${days === 0 ? "today" : days === 1 ? "yesterday" : days + " days ago"}.` : "You haven't made a backup yet.";
+  const need = newM >= 15 || newS >= 3 || (days !== null && days >= 7 && newM + newS > 0);
+  $("backupNudge").hidden = !(need && Date.now() > (state.snooze || 0));
+  const parts = [newM ? `${newM} new wrong answer${newM>1?"s":""}` : "", newS ? `${newS} new score${newS>1?"s":""}` : ""].filter(Boolean).join(" and ");
+  $("nudgeText").innerHTML = `You have ${parts || "new progress"} since your last backup. It's saved only on this phone: if the phone is lost or reset, it's gone. Send a backup to yourself. <b>Telegram → Saved Messages</b> is easiest.`;
+  const showInstall = !isStandalone() && state.seenWelcome && Date.now() > (state.installSnooze || 0) && (isIOS || isAndroid);
+  $("installNudge").hidden = !showInstall;
+  $("installBtn").hidden = !installEvt;
+  $("installText").innerHTML = isIOS
+    ? "On iPhone, Safari can <b>delete your progress</b> if you don't open the app for a week. Apps on the home screen are safe. Tap <b>Share ⬆︎</b>, then <b>Add to Home Screen</b>."
+    : installEvt ? "It opens like a normal app, and your progress is safer."
+    : "Tap <b>⋮</b> (top right), then <b>Add to Home screen</b>. It opens like a normal app.";
+}
+
 let armTimer = null;
 $("resetBtn").onclick = () => {
   const b = $("resetBtn");
@@ -1235,13 +1298,13 @@ $("shareBtn").onclick = async () => {
 };
 
 $("helpBtn").onclick = () => $("helpDlg").showModal();
-$("welcomeOk").onclick = () => { state.seenWelcome = true; save(); $("welcome").hidden = true; };
+$("welcomeOk").onclick = () => { state.seenWelcome = true; save(); $("welcome").hidden = true; renderSafety(); };
 // tap outside a dialog closes it
 document.querySelectorAll("dialog").forEach(d => d.addEventListener("click", e => { if (e.target === d) d.close(); }));
 
 function renderSeg(){ $("modSeg").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === state.module))); }
 $("modSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; state.module = b.dataset.m; save(); renderSeg(); };
-function renderAll(){ renderSeg(); renderReasons(); renderTop(); renderGames(); renderWhere(); renderHist(); renderScores(); renderStats(); $("bandNow").textContent = ""; }
+function renderAll(){ renderSafety(); renderSeg(); renderReasons(); renderTop(); renderGames(); renderWhere(); renderHist(); renderScores(); renderStats(); $("bandNow").textContent = ""; }
 load();
 $("welcome").hidden = !!state.seenWelcome;
 renderAll();
