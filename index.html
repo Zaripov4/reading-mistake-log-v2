@@ -130,6 +130,12 @@ mark{background:var(--hl);color:inherit;border-radius:4px;padding:0 3px}
 .game .ge{display:block;font-size:28px;line-height:1.1}
 .game b{display:block;font-size:13px;line-height:1.2;margin-top:4px}
 .game .stars{display:block;font-size:12px;color:#E0A800;margin-top:3px;letter-spacing:1px}
+.game .mc{display:block;font-size:11px;color:var(--mute);margin-top:2px;font-weight:700}
+.xpmini{display:inline-block;font-size:13px;font-weight:700;color:var(--mute)}
+.mbar{margin:14px auto 0;max-width:320px;text-align:left}
+.mtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:15px}
+.mnew{background:#F5B700;color:#16212E;font-weight:700;font-size:12px;border-radius:999px;padding:1px 8px;animation:pop .4s}
+.mbar .xpbar{display:block}
 .game.boss{border-color:var(--accent);background:var(--accent-soft)}
 .game .tag2{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap}
 
@@ -270,7 +276,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 
   <section class="card">
     <h2>🎮 Practice games</h2>
-    <p class="sub">30 seconds each. Get ⭐⭐⭐ on all of them.</p>
+    <p class="sub">30 seconds each. Master every question 🏆: get it right twice in a row. Questions you miss come back later.</p>
     <div class="games" id="games"></div>
   </section>
 
@@ -345,7 +351,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
       <li>Type your score out of 40 under <b>My scores</b>.</li>
       <li>Look at <b>Your top 3 mistakes</b>. Before the next test, practise only the fix for #1, and play its game.</li>
     </ol>
-    <p class="sub"><b>XP:</b> +10 for each wrong answer you check, +10 for each score, +5 for each right answer in a game. Use the app on different days to grow your 🔥 streak.</p>
+    <p class="sub"><b>XP:</b> +10 for each wrong answer you check, +10 for each score, +5 for each right answer to a new game question (+1 if you have seen it before). Use the app on different days to grow your 🔥 streak.</p>
     <p class="sub"><b>Tip:</b> add this page to your home screen so it opens like an app. iPhone: Share → Add to Home Screen. Android: ⋮ → Add to Home screen.</p>
     <p class="sub" style="font-size:13px">The tips are based on official IELTS guidance from <a href="https://ielts.idp.com/prepare/article-question-types-academic-reading" target="_blank" rel="noopener">IDP</a> and the <a href="https://takeielts.britishcouncil.org/sites/default/files/ielts_reading.pdf" target="_blank" rel="noopener">British Council</a>. Band tables: <a href="https://ielts.idp.com/thailand/results/scores/reading" target="_blank" rel="noopener">IDP IELTS</a>. Not affiliated with IELTS, IDP, the British Council or Cambridge.</p>
     <form method="dialog"><button class="big" style="background:var(--primary)">Got it</button></form>
@@ -758,7 +764,7 @@ const KINDS = {
 };
 
 /* ---------- state ---------- */
-const blank = () => ({mistakes:[], scores:[], seenWelcome:false, xp:0, days:[], best:{}, seen:{}, module:"a"});
+const blank = () => ({mistakes:[], scores:[], seenWelcome:false, xp:0, days:[], best:{}, q:{}, rnd:{}, module:"a"});
 let state = blank();
 function load(){
   try{
@@ -768,6 +774,10 @@ function load(){
       if (old && Array.isArray(old.mistakes)) s = Object.assign(old, {xp: old.mistakes.length*10 + (old.scores||[]).length*10});
     }
     if (s && Array.isArray(s.mistakes)) state = Object.assign(blank(), s);
+    if (state.seen){ // older v2 data: questions already seen count as seen once
+      for (const [i, ks] of Object.entries(state.seen)){ state.q[i] = state.q[i] || {}; ks.forEach(k => { if (!state.q[i][k]) state.q[i][k] = {n:1, s:0, d:0, t:0}; }); }
+      delete state.seen;
+    }
   }catch(e){}
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
@@ -952,17 +962,39 @@ $("detClose").onclick = () => $("det").close();
 /* ---------- practice games ---------- */
 const shuffle = a => { for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
 let dr = {};
-// pick 3 questions the student hasn't seen yet; start over only when all are used
+// Spaced practice. Each question remembers: n = times answered, s = right in a row, bad = last answer wrong,
+// d = round when it may come back, t = round last seen. Right twice in a row = mastered.
+// (Only ever ADD new questions at the END of a bank, so saved progress keeps pointing at the same question.)
+const MASTER = 2, BACK_WRONG = 2, BACK_RIGHT = 3;
+const qStats = i => state.q[i] || (state.q[i] = {});
+const mastered = i => { const Q = state.q[i] || {}; return REASONS[i].drill.filter((_,k) => Q[k] && Q[k].s >= MASTER).length; };
 function pickItems(i, n = 3){
-  const pool = REASONS[i].drill, all = pool.map((_,k)=>k);
-  let seen = (state.seen[i] || []).filter(k => k < pool.length);
-  let fresh = shuffle(all.filter(k => !seen.includes(k)));
-  if (fresh.length < n){ const rest = shuffle(all.filter(k => !fresh.includes(k))); fresh = fresh.concat(rest); seen = []; }
-  const pick = fresh.slice(0, n);
-  state.seen[i] = seen.concat(pick); save();
-  return pick.map(k => pool[k]);
+  const pool = REASONS[i].drill, Q = qStats(i), rnd = (state.rnd[i] || 0) + 1;
+  state.rnd[i] = rnd;
+  const dueBad = [], dueLearn = [], fresh = [], waiting = [], done = [];
+  pool.forEach((_,k) => { const s = Q[k];
+    if (!s) fresh.push(k);
+    else if (s.s >= MASTER) done.push(k);
+    else if (s.d > rnd) waiting.push(k);
+    else (s.bad ? dueBad : dueLearn).push(k); });
+  const pick = [], take = (arr, max) => { for (const k of arr){ if (pick.length >= n || max <= 0) break; if (!pick.includes(k)){ pick.push(k); max--; } } };
+  take(shuffle(dueBad), 2);                 // mistakes come back first (at most 2 per round)
+  take(shuffle(dueLearn), 1);               // one "right once" question, to make it stick
+  take(shuffle(fresh), n);                  // then new questions
+  take(dueBad, n); take(dueLearn, n);
+  take(waiting.sort((a,b) => Q[a].d - Q[b].d), n);   // bank used up: the ones due soonest
+  take(done.sort((a,b) => Q[a].t - Q[b].t), n);      // everything mastered: oldest first
+  dr.round = rnd;
+  return shuffle(pick);
 }
-function openDrill(i){ dr = {i, items: pickItems(i), n:0, ok:0}; showDrillQ(); if (!$("drill").open) $("drill").showModal(); }
+function openDrill(i){ dr = {i, n:0, ok:0, xp:0, newOnes:0, before: mastered(i)}; dr.keys = pickItems(i); dr.items = dr.keys.map(k => REASONS[i].drill[k]); save(); showDrillQ(); if (!$("drill").open) $("drill").showModal(); }
+function record(k, good){
+  const Q = qStats(dr.i), s = Q[k] || (Q[k] = {n:0, s:0, d:0, t:0}), first = s.n === 0;
+  s.n++; s.t = dr.round || 0;
+  if (good){ s.s++; s.bad = false; s.d = s.t + BACK_RIGHT; } else { s.s = 0; s.bad = true; s.d = s.t + BACK_WRONG; }
+  if (first) dr.newOnes++;
+  return good ? (first ? 5 : 1) : 0;   // a question you've seen before is worth less
+}
 function showDrillQ(){
   const it = dr.items[dr.n], order = it.keep ? it.o.map((_,k)=>k) : shuffle(it.o.map((_,k)=>k));
   const three = it.o.length >= 3 || it.o.every(o => o.length <= 6);
@@ -978,26 +1010,30 @@ function showDrillQ(){
     dr.done = true;
     const k = +b.dataset.k, good = k === it.a;
     if (good) dr.ok++;
+    const gain = record(dr.keys[dr.n], good); dr.xp += gain;
     $("opts").querySelectorAll("button").forEach(x => { if (+x.dataset.k === it.a) x.classList.add("right"); });
     if (!good) b.classList.add("wrong");
     const last = dr.n === dr.items.length - 1;
-    $("drFb").innerHTML = `<div class="fb ${good ? "good" : "no"}"><b>${good ? "✅ Yes!" : "❌ Not quite."}</b> ${it.w}</div>
+    $("drFb").innerHTML = `<div class="fb ${good ? "good" : "no"}"><b>${good ? "✅ Yes!" : "❌ Not quite."}</b> ${it.w}${good ? ` <span class="xpmini">+${gain} XP</span>` : `<br><span class="xpmini">This one will come back in a few rounds.</span>`}</div>
       <button class="big" type="button" id="drNext" style="margin-top:12px">${last ? "See my score" : "Next →"}</button>`;
     $("drNext").onclick = () => { dr.done = false; dr.n++; last ? showDrillEnd() : showDrillQ(); };
   };
 }
 function showDrillEnd(){
-  const n = dr.items.length, ok = dr.ok;
+  const n = dr.items.length, ok = dr.ok, total = REASONS[dr.i].drill.length, now = mastered(dr.i), gained = now - dr.before;
   state.best[dr.i] = Math.min(3, Math.max(state.best[dr.i] || 0, ok));
   const msg = ok === n ? "Perfect! 🔥" : ok === n-1 ? "So close! 💪" : "Keep training. You'll get it 💪";
   $("drStep").textContent = label(dr.i);
   $("drView").innerHTML = `<div class="end"><div class="st">${"★".repeat(ok)}${"☆".repeat(n-ok)}</div>
-      <p class="ask">${ok} out of ${n}. ${msg}</p>${ok ? `<span class="saved"><span class="xpgain">+${ok*5} XP</span></span>` : ""}
+      <p class="ask">${ok} out of ${n}. ${msg}</p>${dr.xp ? `<span class="saved"><span class="xpgain">+${dr.xp} XP</span></span>` : ""}
+      <div class="mbar"><div class="mtop"><b>🏆 Mastered ${now} / ${total}</b>${gained > 0 ? `<span class="mnew">+${gained} new!</span>` : ""}</div>
+        <span class="xpbar"><i style="width:${Math.round(now/total*100)}%"></i></span>
+        <p class="cap" style="text-align:left">Get a question right twice in a row to master it. ${now === total ? "You've mastered them all! 🎉" : "Wrong ones come back later."}</p></div>
       <p class="sub" style="margin-top:12px">${REASONS[dr.i].short}</p></div>
     <button class="big" type="button" id="drAgain">🔁 Play again</button>
     <button class="link" type="button" id="drDone">Done</button>`;
-  if (ok) addXP(ok*5); else save();
-  if (ok === n) confetti();
+  if (dr.xp) addXP(dr.xp); else save();
+  if (ok === n || gained > 0) confetti();
   renderGames();
   $("drAgain").onclick = () => openDrill(dr.i);
   $("drDone").onclick = () => $("drill").close();
@@ -1051,7 +1087,7 @@ function renderTop(){
 function renderGames(){
   const boss = (topOrder()[0] || [])[1];
   $("games").innerHTML = REASONS.map((r,i)=>{ const b = Math.min(3, state.best[i] || 0);
-    return `<button class="game ${i === boss ? "boss" : ""}" type="button" data-train="${i}">${i === boss ? `<span class="tag2">👾 Boss</span>` : ""}<span class="ge">${r.e}</span><b>${r.name}</b><span class="stars">${"★".repeat(b)}${"☆".repeat(3-b)}</span></button>`; }).join("");
+    return `<button class="game ${i === boss ? "boss" : ""}" type="button" data-train="${i}">${i === boss ? `<span class="tag2">👾 Boss</span>` : ""}<span class="ge">${r.e}</span><b>${r.name.replace(" -s", "\u00a0\u2011s")}</b><span class="stars">${"★".repeat(b)}${"☆".repeat(3-b)}</span><span class="mc">🏆 ${mastered(i)}/${r.drill.length}</span></button>`; }).join("");
 }
 // Part of the test from the question number
 // Passage from the question number (most tests: 1-13, 14-26, 27-40)
